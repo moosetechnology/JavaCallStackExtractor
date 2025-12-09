@@ -53,6 +53,9 @@ public class LoggerJson extends AbstractLoggerFormat {
 		// writing the name
 		write(quotes("name") + ":" + quotes(method.name()));
 		this.joinElementListing();
+		// writing signature
+		write(quotes("signature") + ":" + signatureParameter(method));
+		this.joinElementListing();
 		// writing class side information
 		write(quotes("isClassSide") + ":" + method.isStatic());
 		this.joinElementListing();
@@ -74,6 +77,29 @@ public class LoggerJson extends AbstractLoggerFormat {
 		this.objectEnd();
 	}
 
+	public String signatureParameter(Method method) {
+		String paramString = "";
+		
+		try {
+			Iterator<LocalVariable> ite = method.arguments().iterator();
+			if (ite.hasNext()) {
+				paramString = parseTypeName(ite.next());
+			}
+			while (ite.hasNext()) {
+				paramString = String.format("%s,%s", paramString, parseTypeName(ite.next()));
+			}
+		} catch (AbsentInformationException e) {
+			// nothing to do
+		}
+		return quotes(String.format("%s(%s)", method.name(), paramString));
+	}
+	
+	public String parseTypeName(LocalVariable var) {
+		JVMSignatureToMooseSignatureConverter parser = JVMSignatureToMooseSignatureConverter.make();
+		if (var.genericSignature()==null) return parser.parseTypeSig(var.signature());
+		else return parser.parseTypeSig(var.genericSignature()); 
+	}
+	
 	@Override
 	public void methodArgumentsStart() {
 		write(quotes("arguments") + ":");
