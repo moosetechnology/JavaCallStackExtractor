@@ -60,7 +60,7 @@ public class LoggerJson extends AbstractLoggerFormat {
 		write(quotes("isClassSide") + ":" + method.isStatic());
 		this.joinElementListing();
 		// writing the class declaring this method
-		write(quotes("parentType") + ":" + quotes(method.location().declaringType().name()));
+		write(quotes("parentType") + ":" + quotes(this.parentType(method)));
 		this.joinElementListing();
 		// writing all arguments types
 		write(quotes("parameters") + ":");
@@ -75,6 +75,20 @@ public class LoggerJson extends AbstractLoggerFormat {
 
 		// close object
 		this.objectEnd();
+	}
+	
+	/**
+	 * Adapt the parent type of the method to make sure it matches moose parent types
+	 * @param method
+	 * @return the parent type of the method
+	 */
+	public String parentType(Method method) {
+		String parentType = method.location().declaringType().name();
+		if (parentType.contains(".")) {
+			return parentType;
+		}
+		
+		return "<Default Package>.".concat(parentType);
 	}
 
 	public String signatureParameter(Method method) {
