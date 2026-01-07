@@ -1,0 +1,12 @@
+# java and eclipse
+/target/
+.classpath
+.project
+.settings/
+
+# Mac
+.DS_Store
+
+
+# outputs
+*.cs
