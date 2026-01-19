@@ -7,13 +7,41 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VirtualMachine;
+
+import app.breakpoint.BreakPointInstaller;
+import app.breakpoint.BreakpointWrapper;
+import app.vmManager.VmManager;
 
 public class CallstackExtractor {
 
 	StackExtractor extractor;
+	JsonNode config;
 
 	public CallstackExtractor(JsonNode loggingConfig, int maxDepth) {
-		extractor = new StackExtractor(loggingConfig, maxDepth);
+		this.extractor = new StackExtractor(loggingConfig, maxDepth);
+	}
+	
+	public CallstackExtractor(JsonNode config) {
+		this.extractor = new StackExtractor(config.get("logging"), config.get("maxDepth").intValue());
+		this.config = config;
+	}
+	
+	public static void extract(VirtualMachine vm, JsonNode config) throws InterruptedException {
+		VmManager vmManager = new VmManager(vm);
+		// Adding the breakpoint
+		BreakpointWrapper bkWrap = BreakPointInstaller.addBreakpoint(vm, config.get("breakpoint"));
+
+		// resuming the process of the thread
+		vmManager.resumeThread(config.get("entryMethod").textValue());
+		
+		vmManager.waitForBreakpoint(bkWrap);
+		
+		CallstackExtractor csExtractor = new CallstackExtractor(config.get("logging"), config.get("maxDepth").intValue());
+		csExtractor.extractCallStack(vmManager.getThreadNamed(config.get("entryMethod").textValue()));
+
+		// properly disconnecting
+		vmManager.disposeVM();
 	}
 
 	/**

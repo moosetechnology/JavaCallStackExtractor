@@ -1,4 +1,4 @@
-package app;
+package app.vmManager;
 
 
 import com.sun.jdi.ThreadReference;
