@@ -7,7 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jdi.VirtualMachine;
 
 import app.config.JDIExtractorConfig;
-import app.csExtractors.CallstackExtractor;
+import app.extractor.CallstackExtractor;
+import app.extractor.JDIExtractor;
 import app.vmAttach.JDIAttach;
 
 /**
@@ -16,6 +17,8 @@ import app.vmAttach.JDIAttach;
 public class JDICallstackExtractor {
 
 	public static void main(String[] args) throws Exception {
+		long startTime = System.nanoTime();
+		System.out.println("startTime : " + startTime + " nanoseconds");
 		// reading the config file
 		String configFileName;
 		JsonNode configNode = null;
@@ -37,10 +40,12 @@ public class JDICallstackExtractor {
 		// creating the VmManager using JDIAttach to find the vm
 		VirtualMachine vm = (new JDIAttach()).attachToJDI(config.getVm());
 
-		CallstackExtractor.extract(vm, config);
+		JDIExtractor.launch(CallstackExtractor.class, vm, config);
 
 		// Properly disconnecting
 		vm.dispose();
+
+		System.out.println("Execution took : " + (System.nanoTime() - startTime) + " nanoseconds");
 	}
 
 }

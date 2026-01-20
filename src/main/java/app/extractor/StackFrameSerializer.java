@@ -1,4 +1,4 @@
-package app.csExtractors;
+package app.extractor;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import com.sun.jdi.ReferenceType;
 /**
  * This class extract all the information of a given stack frame to a text file
  */
-public class StackExtractor {
+public class StackFrameSerializer {
 
 	public static Map<String, BiFunction<String, String, ILoggerFormat>> loggerChoice = registerAllLoggers();
 
@@ -50,11 +50,11 @@ public class StackExtractor {
 	private Set<ObjectReference> visited = new HashSet<>();
 
 	/**
-	 * Constructor of StackExtractor
+	 * Constructor of StackFrameSerializer
 	 * 
 	 * @param loggingConfig information to instantiate the logger
 	 */
-	public StackExtractor(LoggingConfig loggingConfig, int depth) {
+	public StackFrameSerializer(LoggingConfig loggingConfig, int depth) {
 
 		// logger creation
 		String format = loggingConfig.getFormat();
