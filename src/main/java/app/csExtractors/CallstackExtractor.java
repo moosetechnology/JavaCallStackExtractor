@@ -1,9 +1,11 @@
 package app.csExtractors;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
@@ -32,19 +34,21 @@ public class CallstackExtractor {
 	public static void extract(VirtualMachine vm, JDIExtractorConfig config) throws InterruptedException {
 		VmManager vmManager = new VmManager(vm);
 
-		// TODO This can help load classes that are not in jdk
-		ClassPrepareRequest classPrepareRequest = vm.eventRequestManager().createClassPrepareRequest();
-		classPrepareRequest.addClassFilter(config.getBreakpoint().getClassName());
-		classPrepareRequest.enable();
-
-		// Adding the breakpoint
-		BreakpointWrapper bkWrap = BreakPointInstaller.addBreakpoint(vm, config.getBreakpoint());
-
-		vmManager.waitForBreakpoint(bkWrap);
+		vmManager.waitForBreakpoint(vm, config.getBreakpoint());
 
 		CallstackExtractor csExtractor = new CallstackExtractor(config.getLogging(), config.getMaxDepth());
 		csExtractor.extractCallStack(vmManager.getThreadNamed(config.getEntryMethod()));
 
+		//TODO delete this, this is testing code
+		List<ReferenceType> classes2 = vm.allClasses();
+		List<String> classesNames = new ArrayList<>();
+		for (ReferenceType ref : classes2) {
+			if (ref.name().startsWith("org.apache")) {
+				classesNames.add(ref.name());
+			}
+		}
+		
+		
 		// properly disconnecting
 		vmManager.disposeVM();
 	}

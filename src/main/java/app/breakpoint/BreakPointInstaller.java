@@ -1,5 +1,6 @@
 package app.breakpoint;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.jdi.ClassType;
@@ -103,6 +104,19 @@ public class BreakPointInstaller {
 					+ breakpointConfig.getClassName());
 		}
 		return allMethods;
+	}
+
+	/**
+	 * Returns a boolean indicating whether the requested class is loaded in the
+	 * given VM.
+	 * 
+	 * @param vm        the Virtual Machine
+	 * @param className name of the class
+	 * @return True if the class is loaded, false otherwise
+	 */
+	public static boolean isClassLoaded(VirtualMachine vm, String className) {
+
+		return !vm.classesByName(className).isEmpty();
 	}
 
 }
