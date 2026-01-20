@@ -39,6 +39,9 @@ public class JDICallstackExtractor {
 		VirtualMachine vm = jdiAttach.attachToJDI(config.getVm());
 
 		CallstackExtractor.extract(vm, config);
+		
+		// Properly disconnecting
+		vm.dispose();
 	}
 
 }

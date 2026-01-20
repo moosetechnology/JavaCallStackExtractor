@@ -1,18 +1,12 @@
 package app.csExtractors;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
 import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
-import com.sun.jdi.request.ClassPrepareRequest;
-
-import app.breakpoint.BreakPointInstaller;
-import app.breakpoint.BreakpointWrapper;
 import app.config.JDIExtractorConfig;
 import app.config.LoggingConfig;
 import app.vmManager.VmManager;
@@ -38,19 +32,6 @@ public class CallstackExtractor {
 
 		CallstackExtractor csExtractor = new CallstackExtractor(config.getLogging(), config.getMaxDepth());
 		csExtractor.extractCallStack(vmManager.getThreadNamed(config.getEntryMethod()));
-
-		//TODO delete this, this is testing code
-		List<ReferenceType> classes2 = vm.allClasses();
-		List<String> classesNames = new ArrayList<>();
-		for (ReferenceType ref : classes2) {
-			if (ref.name().startsWith("org.apache")) {
-				classesNames.add(ref.name());
-			}
-		}
-		
-		
-		// properly disconnecting
-		vmManager.disposeVM();
 	}
 
 	/**

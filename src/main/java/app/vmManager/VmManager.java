@@ -128,11 +128,4 @@ public class VmManager {
 		}
 	}
 
-	/**
-	 * Dispose of the VM to make sure the vm disconnect properly
-	 */
-	public void disposeVM() {
-		vm.dispose();
-	}
-
 }
