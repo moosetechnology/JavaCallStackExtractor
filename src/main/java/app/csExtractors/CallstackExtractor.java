@@ -25,10 +25,22 @@ public class CallstackExtractor {
 		this.config = config;
 	}
 
-	public static void extract(VirtualMachine vm, JDIExtractorConfig config) throws InterruptedException {
+	/**
+	 * Entry point of stack extraction, execute and extract the stack with the given
+	 * configuration
+	 * 
+	 * @param vm     the vm on witch the extraction is done
+	 * @param config the extraction configuration
+	 */
+	public static void extract(VirtualMachine vm, JDIExtractorConfig config) {
 		VmManager vmManager = new VmManager(vm);
 
-		vmManager.waitForBreakpoint(vm, config.getBreakpoint());
+		try {
+			vmManager.waitForBreakpoint(vm, config.getBreakpoint());
+		} catch (InterruptedException e) {
+			throw new IllegalStateException(
+					"Cannot continue extraction due to an interruption of the vm connexion : " + e.getMessage());
+		}
 
 		CallstackExtractor csExtractor = new CallstackExtractor(config.getLogging(), config.getMaxDepth());
 		csExtractor.extractCallStack(vmManager.getThreadNamed(config.getEntryMethod()));

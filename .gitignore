@@ -4,6 +4,9 @@
 .project
 .settings/
 
+# IntelliJ
+.idea
+
 # Mac
 .DS_Store
 
