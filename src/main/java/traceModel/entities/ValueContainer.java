@@ -5,8 +5,8 @@ package traceModel.entities;
  */
 public interface ValueContainer {
 
-    public TraceValue getValue();
+    TraceValue getValue();
 
-    public void setValue(TraceValue value);
+    void setValue(TraceValue value);
 
 }
