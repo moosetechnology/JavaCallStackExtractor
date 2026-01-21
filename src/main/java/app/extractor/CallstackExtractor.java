@@ -17,6 +17,9 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.request.ClassPrepareRequest;
+import com.sun.jdi.request.MethodEntryRequest;
+import com.sun.jdi.request.MethodExitRequest;
+
 import app.breakpoint.BreakPointInstaller;
 import app.breakpoint.BreakpointWrapper;
 import app.config.BreakpointConfig;
@@ -34,11 +37,12 @@ public class CallstackExtractor extends JDIExtractor {
 	@Override
 	protected void executeExtraction() {
 		try {
-			// TODO this method does not work, it gives way too many frames (pay attention this make the program way slower, except at least 5 minutes wait)
+			// TODO this method does not work, it gives way too many frames (pay attention
+			// this make the program way slower, except at least 5 minutes wait)
 			//List<StackFrame> frames = this.collectFrames();
+			//this.processFrames(frames);
 
-			this.waitForBreakpoint(); 
-
+			this.waitForBreakpoint();
 			this.processFrames(this.getThread());
 
 		} catch (IncompatibleThreadStateException e) {
@@ -139,6 +143,37 @@ public class CallstackExtractor extends JDIExtractor {
 					"Cannot continue extraction due to an interruption of the vm connexion : " + e.getMessage());
 		}
 	}
+	
+	/**
+	 * Iterates over the stack frames and delegates extraction to the
+	 * StackExtractor.
+	 */
+	private void processFrames(List<StackFrame> frames) throws IncompatibleThreadStateException {
+		stackFrameSerializer.getLogger().framesStart();
+		// iterating from the end of the list to start the logging from the first method
+		// called
+		ListIterator<StackFrame> it = frames.listIterator(frames.size());
+
+		// doing the first iteration separately because the logging potentially need
+		// to know if we are at the first element or not to join with a special
+		// character
+		stackFrameSerializer.getLogger().frameLineStart(1);
+
+		// extracting the stack frame
+		stackFrameSerializer.extract(it.previous());
+		stackFrameSerializer.getLogger().frameLineEnd();
+
+		for (int i = 2; i <= frames.size(); i++) {
+			stackFrameSerializer.getLogger().joinElementListing();
+
+			stackFrameSerializer.getLogger().frameLineStart(i);
+			// extracting the stack frame
+			stackFrameSerializer.extract(it.previous());
+			stackFrameSerializer.getLogger().frameLineEnd();
+		}
+		stackFrameSerializer.getLogger().framesEnd();
+
+	}
 
 	/**
 	 * Blocks execution until the configured breakpoint is hit. Handles
@@ -148,11 +183,16 @@ public class CallstackExtractor extends JDIExtractor {
 	 */
 	private List<StackFrame> collectFrames() throws IncompatibleThreadStateException {
 		Stack<StackFrame> frames = new Stack<>();
+		ThreadReference targetThread = this.getThread();
 
 		// Request method entries
-		vm.eventRequestManager().createMethodEntryRequest().enable();
+		MethodEntryRequest entryReq = vm.eventRequestManager().createMethodEntryRequest();
+		entryReq.addThreadFilter(targetThread);
+		entryReq.enable();
 		// Request method exits
-		vm.eventRequestManager().createMethodExitRequest().enable();
+		MethodExitRequest exitReq = vm.eventRequestManager().createMethodExitRequest();
+		exitReq.addThreadFilter(targetThread);
+		exitReq.enable();
 
 		BreakpointConfig bkConfig = config.getBreakpoint();
 		BreakpointWrapper bkWrap = null;
@@ -191,12 +231,13 @@ public class CallstackExtractor extends JDIExtractor {
 									"ClassPrepareRequest catched on but the class is still not loaded");
 						}
 					} else if (event instanceof MethodEntryEvent) {
-						// Checks if the counts still matches
-						frames.push(this.getThread().frame(0));
+						// If counts does not matches it means it is noise from the VM
+						if (frames.size() +1 == targetThread.frameCount()){
+							frames.push(targetThread.frame(0));
+						}
 
 					} else if (event instanceof MethodExitEvent) {
 						frames.pop();
-
 					}
 				}
 
