@@ -1,5 +1,6 @@
 package app.extractor;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Stack;
@@ -35,7 +36,7 @@ public class CallstackExtractor extends JDIExtractor {
 	}
 
 	@Override
-	protected void executeExtraction() { 
+	protected void executeExtraction() {
 		try {
 			// TODO this method does not work, it gives way too many frames (pay attention
 			// this make the program way slower, except at least 5 minutes wait)
@@ -48,17 +49,17 @@ public class CallstackExtractor extends JDIExtractor {
 		} catch (IncompatibleThreadStateException e) {
 			// Should not happen because we are supposed to be at a breakpoint
 			throw new IllegalStateException("Thread should be at a breakpoint but isn't");
-		} finally {
-			// close the writer in the logger
-			stackFrameSerializer.closeLogger();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
 	/**
 	 * Iterates over the stack frames and delegates extraction to the
 	 * StackExtractor.
+	 * @throws IOException 
 	 */
-	private void processFrames(ThreadReference thread) throws IncompatibleThreadStateException {
+	private void processFrames(ThreadReference thread) throws IncompatibleThreadStateException, IOException {
 		processFrames(thread.frames());
 	}
 
@@ -123,31 +124,18 @@ public class CallstackExtractor extends JDIExtractor {
 	/**
 	 * Iterates over the stack frames and delegates extraction to the
 	 * StackExtractor.
+	 * @throws IOException 
 	 */
-	private void processFrames(List<StackFrame> frames) throws IncompatibleThreadStateException {
-		stackFrameSerializer.getLogger().framesStart();
+	private void processFrames(List<StackFrame> frames) throws IncompatibleThreadStateException, IOException {
+
 		// iterating from the end of the list to start the logging from the first method
 		// called
 		ListIterator<StackFrame> it = frames.listIterator(frames.size());
-
-		// doing the first iteration separately because the logging potentially need
-		// to know if we are at the first element or not to join with a special
-		// character
-		stackFrameSerializer.getLogger().frameLineStart(1);
-
-		// extracting the stack frame
-		stackFrameSerializer.extract(it.previous());
-		stackFrameSerializer.getLogger().frameLineEnd();
-
-		for (int i = 2; i <= frames.size(); i++) {
-			stackFrameSerializer.getLogger().joinElementListing();
-
-			stackFrameSerializer.getLogger().frameLineStart(i);
-			// extracting the stack frame
-			stackFrameSerializer.extract(it.previous());
-			stackFrameSerializer.getLogger().frameLineEnd();
+		while (it.hasPrevious()) {
+			stackFrameSerializer.push(it.previous());
 		}
-		stackFrameSerializer.getLogger().framesEnd();
+		
+		stackFrameSerializer.writeAll();
 
 	}
 

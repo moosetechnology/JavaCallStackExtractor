@@ -9,76 +9,82 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.StringReference;
 
-public class StackLoggerJson extends AbstractStackLoggerFormat {
+public class StackLoggerJson implements IStackLogger {
 
 	public StackLoggerJson(String outputName, String Extension) {
-		super(outputName, Extension);
-	}
-
-	@Override
-	public void framesStart() {
-		this.objectStart();
-
-		write(quotes("Lines") + ":");
-		this.arrayStart();
-	}
-
-	@Override
-	public void framesEnd() {
-		this.arrayEnd();
-
-		this.objectEnd();
-	}
-
-	@Override
-	public void frameLineStart(int i) {
-		this.objectStart();
 
 	}
 
 	@Override
-	public void frameLineEnd() {
-		this.objectEnd();
+	public String framesStart() {
+		return this.objectStart() + quotes("Lines") + ":" + this.arrayStart();
 
 	}
 
 	@Override
-	public void methodSignature(Method method) {
+	public String framesEnd() {
+		return this.arrayEnd() + this.objectEnd();
+	}
+
+	@Override
+	public String frameLineStart(int i) {
+		return this.objectStart();
+	}
+
+	@Override
+	public String frameLineEnd() {
+		return this.objectEnd();
+
+	}
+
+	@Override
+	public String methodSignature(Method method) {
+		String res = "";
 		// Retrieving the type of the parameters is important because it provides the
 		// most general type that can be used
+		res += quotes("method") + ":";
 
-		write(quotes("method") + ":");
 		// open object
-		this.objectStart();
+		res += this.objectStart();
+
 		// writing the name
-		write(quotes("name") + ":" + quotes(method.name()));
-		this.joinElementListing();
+		res += quotes("name") + ":" + quotes(method.name());
+		res += this.joinElementListing();
+
 		// writing signature
-		write(quotes("signature") + ":" + signatureParameter(method));
-		this.joinElementListing();
+		res += quotes("signature") + ":" + signatureParameter(method);
+		res += this.joinElementListing();
+
 		// writing class side information
-		write(quotes("isClassSide") + ":" + method.isStatic());
-		this.joinElementListing();
+		res += quotes("isClassSide") + ":" + method.isStatic();
+		res += this.joinElementListing();
+
 		// writing the class declaring this method
-		write(quotes("parentType") + ":" + quotes(this.parentType(method)));
-		this.joinElementListing();
+		res += quotes("parentType") + ":" + quotes(this.parentType(method));
+		res += this.joinElementListing();
+
 		// writing all arguments types
-		write(quotes("parameters") + ":");
+		res += quotes("parameters") + ":";
+
 		// open array
-		this.arrayStart();
+		res += this.arrayStart();
 
 		// fill the array with the parameters names and type
-		parameters(method);
+		res += parameters(method);
 
 		// close array
-		this.arrayEnd();
+		res += this.arrayEnd();
 
 		// close object
-		this.objectEnd();
+		res += this.objectEnd();
+
+		return res;
 	}
-	
+
 	/**
-	 * Adapt the parent type of the method to make sure it matches moose parent types
+	 * Adapt the parent type of the method to make sure it matches moose parent
+	 * types
+	 * 
 	 * @param method
 	 * @return the parent type of the method
 	 */
@@ -87,13 +93,13 @@ public class StackLoggerJson extends AbstractStackLoggerFormat {
 		if (parentType.contains(".")) {
 			return parentType;
 		}
-		
+
 		return "<Default Package>.".concat(parentType);
 	}
 
 	public String signatureParameter(Method method) {
 		String paramString = "";
-		
+
 		try {
 			Iterator<LocalVariable> ite = method.arguments().iterator();
 			if (ite.hasNext()) {
@@ -107,246 +113,298 @@ public class StackLoggerJson extends AbstractStackLoggerFormat {
 		}
 		return quotes(String.format("%s(%s)", method.name(), paramString));
 	}
-	
+
 	public String parseTypeName(LocalVariable var) {
 		JVMSignatureToMooseSignatureConverter parser = JVMSignatureToMooseSignatureConverter.make();
-		if (var.genericSignature()==null) return parser.parseTypeSig(var.signature());
-		else return parser.parseTypeSig(var.genericSignature()); 
+		if (var.genericSignature() == null)
+			return parser.parseTypeSig(var.signature());
+		else
+			return parser.parseTypeSig(var.genericSignature());
 	}
-	
+
 	@Override
-	public void methodArgumentsStart() {
-		write(quotes("arguments") + ":");
+	public String methodArgumentsStart() {
+		String res = "";
+
+		res += quotes("arguments") + ":";
 
 		// open object
-		this.objectStart();
+		res += this.objectStart();
+
+		return res;
 
 	}
 
 	@Override
-	public void methodArgumentsEnd() {
+	public String methodArgumentsEnd() {
 		// close object
-		this.objectEnd();
+		return this.objectEnd();
 	}
 
 	@Override
-	public void methodArgumentsValuesStart() {
-		write(quotes("argsValues") + ":");
-		this.arrayStart();
+	public String methodArgumentsValuesStart() {
+		String res;
+
+		res = quotes("argsValues") + ":";
+		res += this.arrayStart();
+
+		return res;
 
 	}
 
 	@Override
-	public void methodArgumentsValuesEnd() {
-		this.arrayEnd();
+	public String methodArgumentsValuesEnd() {
+		return this.arrayEnd();
 	}
 
 	@Override
-	public void inaccessibleArgument() {
-		write(quotes("accessible") + ":" + "false");
+	public String inaccessibleArgument() {
+		return quotes("accessible") + ":" + "false";
 	}
 
 	@Override
-	public void fieldsStart() {
+	public String fieldsStart() {
+		String res;
 		// open object for fields
-		this.objectStart();
+		res = this.objectStart();
 
-		write(quotes("fields") + ":");
+		res += quotes("fields") + ":";
 		// open array
-		this.arrayStart();
+		res += this.arrayStart();
+
+		return res;
 	}
 
 	@Override
-	public void fieldsEnd() {
+	public String fieldsEnd() {
+		String res;
+
 		// open array
-		this.arrayEnd();
+		res = this.arrayEnd();
 
 		// close fields
-		this.objectEnd();
+		res += this.objectEnd();
+
+		return res;
 	}
 
 	@Override
-	public void fieldStart(String name) {
+	public String fieldStart(String name) {
+		String res;
 		// open object for field
-		this.objectStart();
-		write(quotes("field") + ":");
+		res = this.objectStart();
+		res += quotes("field") + ":";
 		// open object for field description
-		this.objectStart();
-		write(quotes("name") + ":" + quotes(name));
+		res += this.objectStart();
+		res += quotes("name") + ":" + quotes(name);
+
+		return res;
 	}
 
 	@Override
-	public void fieldValueStart() {
-		this.joinElementListing();
-		write(quotes("value") + ":");
+	public String fieldValueStart() {
+		String res = this.joinElementListing();
+
+		res += quotes("value") + ":";
+
+		return res;
 	}
 
 	@Override
-	public void fieldValueEnd() {
+	public String fieldValueEnd() {
 		// Nothing needed to be logged
-
+		return "";
 	}
 
 	@Override
-	public void fieldEnd() {
+	public String fieldEnd() {
+		String res;
 		// close object for field description field
-		this.objectEnd();
+		res = this.objectEnd();
 		// close object field
-		this.objectEnd();
+		res += this.objectEnd();
+
+		return res;
 	}
 
 	@Override
-	public void inaccessibleField() {
-		this.joinElementListing();
-		write(quotes("accessible") + ":" + "false");
+	public String inaccessibleField() {
+		String res;
+		res = this.joinElementListing();
+		res += quotes("accessible") + ":" + "false";
+
+		return res;
 	}
 
 	@Override
-	public void methodReceiverStart() {
-		write(quotes("receiver") + ":");
+	public String methodReceiverStart() {
+		return quotes("receiver") + ":";
 		// open object
 		// Resolve the case of {
 		// this.objectStart();
 	}
 
 	@Override
-	public void methodReceiverEnd() {
+	public String methodReceiverEnd() {
 		// close object
 		// this.objectEnd();
+		return "";
 	}
 
 	@Override
-	public void nullValue() {
-		write("null");
+	public String nullValue() {
+		return "null";
 	}
 
 	@Override
-	public void maxDepth() {
-		write(quotes("<<MAX_DEPTH_REACHED>>"));
+	public String maxDepth() {
+		return quotes("<<MAX_DEPTH_REACHED>>");
 	}
 
 	@Override
-	public void primitiveValue(PrimitiveValue value) {
+	public String primitiveValue(PrimitiveValue value) {
+
+		String res;
 		// open object for the primitive type
-		this.objectStart();
+		res = this.objectStart();
 
-		write(quotes("primitiveValue") + ":");
+		res += quotes("primitiveValue") + ":";
 
 		// open object for the description of the type
-		this.objectStart();
+		res += this.objectStart();
 
-		write(quotes("type") + ":" + quotes(value.type().name()));
+		res += quotes("type") + ":" + quotes(value.type().name());
 
-		this.joinElementListing();
+		res += this.joinElementListing();
 
-		write(quotes("value") + ":" + quotes(value));
+		res += quotes("value") + ":" + quotes(value);
 
 		// close object for the description of the type
-		this.objectEnd();
+		res += this.objectEnd();
 
 		// close object for the primitive type
-		this.objectEnd();
+		res += this.objectEnd();
+
+		return res;
 	}
 
 	@Override
-	public void stringReference(StringReference value) {
-		write(quotes(value.value()));
+	public String stringReference(StringReference value) {
+		return quotes(value.value());
 	}
 
 	@Override
-	public void objectReferenceStart() {
+	public String objectReferenceStart() {
+		String res;
+
 		// open object for the reference
-		this.objectStart();
-		write(quotes("reference") + ":");
+		res = this.objectStart();
+		res += quotes("reference") + ":";
 		// open object for the description
-		this.objectStart();
+		res += this.objectStart();
+
+		return res;
 	}
 
-	public void objectReferenceEnd() {
+	public String objectReferenceEnd() {
+		String res;
 		// close object for the description
-		this.objectEnd();
+		res = this.objectEnd();
 		// close object for the reference
-		this.objectEnd();
+		res += this.objectEnd();
+		return res;
 	}
 
-	public void objectReferenceInfoStart(ObjectReference value) {
-		write(quotes("type") + ":" + quotes(value.referenceType().name()));
-		this.joinElementListing();
-		write(quotes("uniqueId") + ":" + value.uniqueID());
-		this.joinElementListing();
-		write(quotes("refered") + ":");
+	public String objectReferenceInfoStart(ObjectReference value) {
+		String res;
+		res = quotes("type") + ":" + quotes(value.referenceType().name());
+		res += this.joinElementListing();
+		res += quotes("uniqueId") + ":" + value.uniqueID();
+		res += this.joinElementListing();
+		res += quotes("refered") + ":";
+
+		return res;
 	}
 
-	public void objectReferenceInfoEnd() {
+	public String objectReferenceInfoEnd() {
+		return "";
 	}
 
-	public void objectReferenceAlreadyFound(ObjectReference value) {
+	public String objectReferenceAlreadyFound(ObjectReference value) {
+		String res;
+		res = quotes("alreadyFound") + ":" + "true";
+		res += this.joinElementListing();
+		res += quotes("uniqueId") + ":" + value.uniqueID();
 
-		write(quotes("alreadyFound") + ":" + "true");
-		this.joinElementListing();
-		write(quotes("uniqueId") + ":" + value.uniqueID());
-	}
-
-	@Override
-	public void emptyArray() {
-		// Nothing
-	}
-
-	@Override
-	public void arrayValueStart(int number) {
-		// Nothing
+		return res;
 	}
 
 	@Override
-	public void arrayValueEnd() {
-		// Nothing
-
+	public String emptyArray() {
+		return "";
 	}
 
 	@Override
-	public void classNotPrepared() {
-		write(quotes("<<CLASS_NOT_PREPARED>>"));
-
+	public String arrayValueStart(int number) {
+		return "";
 	}
 
 	@Override
-	public void joinElementListing() {
-		write(",");
+	public String arrayValueEnd() {
+		return "";
 	}
 
 	@Override
-	public void arrayReferenceStart() {
-		this.objectStart();
-		write(quotes("elements") + ":");
-		this.arrayStart();
+	public String classNotPrepared() {
+		return quotes("<<CLASS_NOT_PREPARED>>");
 
 	}
 
 	@Override
-	public void arrayReferenceEnd() {
-		this.arrayEnd();
-		this.objectEnd();
+	public String joinElementListing() {
+		return ",";
 	}
 
-	private void arrayStart() {
-		write("[");
+	@Override
+	public String arrayReferenceStart() {
+		String res;
+		res = this.objectStart();
+		res += quotes("elements") + ":";
+		res += this.arrayStart();
+
+		return res;
+
 	}
 
-	private void arrayEnd() {
-		write("]");
+	@Override
+	public String arrayReferenceEnd() {
+		String res;
+		res = this.arrayEnd();
+		res += this.objectEnd();
+
+		return res;
 	}
 
-	private void parameters(Method method) {
+	private String arrayStart() {
+		return "[";
+	}
+
+	private String arrayEnd() {
+		return "]";
+	}
+
+	private String parameters(Method method) {
+		String res = "";
 		try {
 			// trying to obtain the arguments information
 			Iterator<LocalVariable> ite = method.arguments().iterator();
 
 			if (ite.hasNext()) {
-				parameter(ite.next());
+				res += parameter(ite.next());
 			}
 			while (ite.hasNext()) {
-				this.joinElementListing();
-				parameter(ite.next());
+				res += this.joinElementListing();
+				res += parameter(ite.next());
 			}
 
 		} catch (AbsentInformationException e) {
@@ -355,51 +413,61 @@ public class StackLoggerJson extends AbstractStackLoggerFormat {
 			Iterator<String> ite = method.argumentTypeNames().iterator();
 
 			if (ite.hasNext()) {
-				parameter(ite.next());
+				res += parameter(ite.next());
 			}
 			while (ite.hasNext()) {
-				this.joinElementListing();
-				parameter(ite.next());
+				res += this.joinElementListing();
+				res += parameter(ite.next());
 			}
 		}
+
+		return res;
 	}
 
 	/*
 	 * log the name and type of the parameter if the LocalVariable could be obtained
 	 */
-	private void parameter(LocalVariable var) {
-		this.objectStart();
-		write(quotes("name") + ":");
-		write(quotes(var.name()));
-		this.joinElementListing();
-		write(quotes("type") + ":");
-		write(quotes(var.typeName()));
-		this.objectEnd();
+	private String parameter(LocalVariable var) {
+		String res;
+
+		res = this.objectStart();
+		res += quotes("name") + ":";
+		res += quotes(var.name());
+		res += this.joinElementListing();
+		res += quotes("type") + ":";
+		res += quotes(var.typeName());
+		res += this.objectEnd();
+
+		return res;
 	}
 
 	/*
 	 * log only the type of the parameter if the LocalVariable could not be obtained
 	 */
-	private void parameter(String typeName) {
-		this.objectStart();
-		write(quotes("name") + ":");
-		this.nullValue();
-		this.joinElementListing();
-		write(quotes("type") + ":");
-		write(quotes(typeName));
-		this.objectEnd();
+	private String parameter(String typeName) {
+		String res;
+
+		res = this.objectStart();
+		res += quotes("name") + ":";
+		res += this.nullValue();
+		res += this.joinElementListing();
+		res += quotes("type") + ":";
+		res += quotes(typeName);
+		res += this.objectEnd();
+
+		return res;
 	}
 
 	private String quotes(Object obj) {
 		return "\"" + obj.toString() + "\"";
 	}
 
-	private void objectStart() {
-		write("{");
+	private String objectStart() {
+		return "{";
 	}
 
-	private void objectEnd() {
-		write("}");
+	private String objectEnd() {
+		return "}";
 	}
 
 }
