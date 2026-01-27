@@ -13,3 +13,6 @@
 
 # outputs
 *.cs
+/.gradle/
+bin/
+build

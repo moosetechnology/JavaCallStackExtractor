@@ -50,6 +50,7 @@ public class JDIAttachingFastCallStackExtractor {
 		vm.dispose();
 
 		System.out.println("Execution took : " + (System.nanoTime() - startTime) + " nanoseconds");
+
 	}
 
 }
