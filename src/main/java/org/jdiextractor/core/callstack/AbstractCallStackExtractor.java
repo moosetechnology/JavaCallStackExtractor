@@ -38,7 +38,7 @@ public abstract class AbstractCallStackExtractor extends AbstractExtractor {
 	 * 
 	 * @throws IOException
 	 */
-	protected void processFrames(List<StackFrame> frames) throws IncompatibleThreadStateException, IOException {
+	protected void processFrames(List<StackFrame> frames) throws IOException {
 
 		// iterating from the end of the list to start the logging from the first method
 		// called

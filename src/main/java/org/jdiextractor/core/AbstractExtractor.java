@@ -2,10 +2,22 @@ package org.jdiextractor.core;
 
 import java.lang.reflect.Constructor;
 
+import org.jdiextractor.config.BreakpointConfig;
 import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.service.breakpoint.BreakPointInstaller;
+import org.jdiextractor.service.breakpoint.BreakpointWrapper;
 
+import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.BreakpointEvent;
+import com.sun.jdi.event.ClassPrepareEvent;
+import com.sun.jdi.event.Event;
+import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.StepEvent;
+import com.sun.jdi.event.VMDeathEvent;
+import com.sun.jdi.event.VMDisconnectEvent;
+import com.sun.jdi.request.ClassPrepareRequest;
 
 /**
  * Base framework for implementing JDI-based analysis tools.
@@ -126,4 +138,59 @@ public abstract class AbstractExtractor {
 		}
 		return main;
 	}
+
+	protected void processEventsUntil(BreakpointConfig bkConfig) throws IncompatibleThreadStateException {
+		ThreadReference targetThread = this.getThread();
+
+		BreakpointWrapper bkWrap = null;
+		if (BreakPointInstaller.isClassLoaded(vm, bkConfig.getClassName())) {
+			bkWrap = BreakPointInstaller.addBreakpoint(vm, bkConfig);
+		} else {
+			ClassPrepareRequest cpReq = vm.eventRequestManager().createClassPrepareRequest();
+			cpReq.addClassFilter(bkConfig.getClassName());
+			cpReq.enable();
+		}
+
+		vm.resume();
+		EventSet eventSet;
+
+		try {
+			while ((eventSet = vm.eventQueue().remove()) != null) {
+				for (Event event : eventSet) {
+
+					if (event instanceof StepEvent) {
+						this.reactToStepEvent((StepEvent) event, targetThread);
+					}
+
+					else if (event instanceof VMDeathEvent || event instanceof VMDisconnectEvent) {
+						throw new IllegalStateException("VM disconnected or died before breakpoint");
+					}
+
+					else if (event instanceof BreakpointEvent) {
+						if (bkWrap == null) {
+							throw new IllegalStateException("Thread encountered a breakpoint while none has been set");
+						}
+						if (bkWrap.shouldStopAt(event)) {
+							return;
+						}
+					}
+
+					else if (event instanceof ClassPrepareEvent) {
+						if (BreakPointInstaller.isClassLoaded(vm, bkConfig.getClassName())) {
+							bkWrap = BreakPointInstaller.addBreakpoint(vm, bkConfig);
+						} else {
+							throw new IllegalStateException("ClassPrepareRequest caught but class is still not loaded");
+						}
+					}
+
+				}
+
+				eventSet.resume();
+			}
+		} catch (InterruptedException e) {
+			throw new IllegalStateException("Interruption during extraction: " + e.getMessage());
+		}
+	}
+
+	protected abstract void reactToStepEvent(StepEvent event, ThreadReference targetThread);
 }
