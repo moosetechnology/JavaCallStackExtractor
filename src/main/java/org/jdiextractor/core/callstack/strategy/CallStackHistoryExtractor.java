@@ -7,6 +7,7 @@ import org.jdiextractor.core.callstack.AbstractCallStackExtractor;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.StepRequest;
 
@@ -64,5 +65,10 @@ public class CallStackHistoryExtractor extends AbstractCallStackExtractor {
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);
 		}
+	}
+
+	@Override
+	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
+		// Nothing, should not happen in this scenario
 	}
 }

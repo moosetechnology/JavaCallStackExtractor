@@ -14,6 +14,7 @@ import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
@@ -161,6 +162,9 @@ public abstract class AbstractExtractor {
 					if (event instanceof StepEvent) {
 						this.reactToStepEvent((StepEvent) event, targetThread);
 					}
+					if (event instanceof MethodEntryEvent) {
+						this.reactToMethodEntryEvent((MethodEntryEvent) event, targetThread);
+					}
 
 					else if (event instanceof VMDeathEvent || event instanceof VMDisconnectEvent) {
 						throw new IllegalStateException("VM disconnected or died before breakpoint");
@@ -191,6 +195,8 @@ public abstract class AbstractExtractor {
 			throw new IllegalStateException("Interruption during extraction: " + e.getMessage());
 		}
 	}
+
+	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread);
 
 	protected abstract void reactToStepEvent(StepEvent event, ThreadReference targetThread);
 }

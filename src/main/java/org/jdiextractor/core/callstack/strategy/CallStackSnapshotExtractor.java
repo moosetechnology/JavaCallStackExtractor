@@ -7,6 +7,7 @@ import org.jdiextractor.core.callstack.AbstractCallStackExtractor;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 
 /**
@@ -42,7 +43,12 @@ public class CallStackSnapshotExtractor extends AbstractCallStackExtractor {
 
 	@Override
 	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
-		// Nothing, should not have a step event in this scenario
+		// Nothing, should not happen in this scenario
+	}
+	
+	@Override
+	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
+		// Nothing, should not happen in this scenario
 	}
 
 }
