@@ -2,11 +2,11 @@ package org.jdiextractor.tracemodel.entities;
 
 import org.jdiextractor.tracemodel.TraceEntity;
 
-public class AssignationRight extends TraceEntity implements ValueContainer {
+public class TraceAssignationRight extends TraceEntity implements TraceValueContainer {
 
 	private TraceValue value;
 
-	public AssignationRight() {
+	public TraceAssignationRight() {
 
 	}
 

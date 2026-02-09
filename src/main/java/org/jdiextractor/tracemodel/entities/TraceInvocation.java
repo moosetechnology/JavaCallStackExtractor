@@ -7,12 +7,12 @@ import com.sun.jdi.Method;
 /**
  * Representing an Invocation of a method
  */
-public class Invocation extends TraceEntity {
+public class TraceInvocation extends TraceEntity {
 
 	private Method sender;
 	private Method invokee;
 	
-	public Invocation(Method sender, Method invokee) {
+	public TraceInvocation(Method sender, Method invokee) {
 		this.sender = sender;
 		this.invokee = invokee;
 	}

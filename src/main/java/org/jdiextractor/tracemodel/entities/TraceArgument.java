@@ -2,13 +2,16 @@ package org.jdiextractor.tracemodel.entities;
 
 import org.jdiextractor.tracemodel.TraceEntity;
 
-public class Receiver extends TraceEntity implements ValueContainer {
+/**
+ * Argument given to a {@link TraceMethod} during execution
+ */
+public class TraceArgument extends TraceEntity implements TraceValueContainer {
 
 	private TraceMethod method;
 
 	private TraceValue value;
 
-	public Receiver() {
+	public TraceArgument() {
 
 	}
 

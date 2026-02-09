@@ -3,7 +3,7 @@ package org.jdiextractor.tracemodel.entities;
 /**
  * Container that holds a specific {@link TraceValue}.
  */
-public interface ValueContainer {
+public interface TraceValueContainer {
 
     TraceValue getValue();
 
