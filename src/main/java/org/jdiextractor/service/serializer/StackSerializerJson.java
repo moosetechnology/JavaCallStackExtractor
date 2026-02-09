@@ -167,7 +167,7 @@ public class StackSerializerJson {
 	public String fieldsEnd() {
 		String res;
 
-		// open array
+		// close array
 		res = this.arrayEnd();
 
 		// close fields

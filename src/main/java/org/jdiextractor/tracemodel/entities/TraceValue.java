@@ -9,17 +9,8 @@ import com.sun.jdi.Value;
  */
 public abstract class TraceValue extends TraceEntity {
 
-	private Value value;
 
 	public TraceValue() {
 
-	}
-
-	public void setValue(Value value) {
-		this.value = value;
-	}
-
-	public Value getValue() {
-		return value;
 	}
 }

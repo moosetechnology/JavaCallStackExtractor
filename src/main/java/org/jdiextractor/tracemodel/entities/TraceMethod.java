@@ -5,8 +5,6 @@ import java.util.List;
 
 import org.jdiextractor.service.serializer.TraceSerializer;
 
-import com.sun.jdi.Method;
-
 /**
  * Represents a specific method execution call in the trace.
  */
@@ -18,9 +16,17 @@ public class TraceMethod extends TraceElement {
 
 	private List<TraceArgument> arguments = new ArrayList<>();
 
+	private List<TraceParameter> parameters = new ArrayList<>();
+
 	private String name;
 
 	private String signature;
+
+	private boolean isClassSide;
+
+	private boolean isArgsAccessible;
+
+	private String parentType;
 
 	public TraceMethod() {
 
@@ -54,6 +60,18 @@ public class TraceMethod extends TraceElement {
 		this.arguments.add(argument);
 	}
 
+	public List<TraceParameter> getParameters() {
+		return parameters;
+	}
+
+	public void setParameters(List<TraceParameter> parameters) {
+		this.parameters = parameters;
+	}
+
+	public void addParameter(TraceParameter parameter) {
+		this.parameters.add(parameter);
+	}
+
 	public void setSignature(String signature) {
 		this.signature = signature;
 	}
@@ -62,7 +80,7 @@ public class TraceMethod extends TraceElement {
 		return this.signature;
 	}
 
-	private void setName(String name) {
+	public void setName(String name) {
 		this.name = name;
 
 	}
@@ -71,16 +89,34 @@ public class TraceMethod extends TraceElement {
 		return this.name;
 	}
 
-	public static TraceMethod from(Method method) {
-		TraceMethod traceMethod = new TraceMethod();
-		traceMethod.setName(method.name());
-		traceMethod.setSignature(method.signature());
-		return traceMethod;
-	}
-
 	@Override
 	public void acceptSerializer(TraceSerializer serializer) {
 		serializer.serialize(this);
+	}
+
+	public void setClassSide(boolean isClassSide) {
+		this.isClassSide = isClassSide;
+
+	}
+
+	public boolean isClassSide() {
+		return this.isClassSide;
+	}
+
+	public void setParentType(String parentType) {
+		this.parentType = parentType;
+	}
+
+	public String getParentType() {
+		return this.parentType;
+	}
+
+	public void setArgumentAccessible(boolean b) {
+		this.isArgsAccessible = b;
+	}
+
+	public boolean isArgsAccessible() {
+		return this.isArgsAccessible;
 	}
 
 }
