@@ -14,6 +14,7 @@ import org.jdiextractor.tracemodel.entities.TraceInvocation;
 import org.jdiextractor.tracemodel.entities.TraceMethod;
 import org.jdiextractor.tracemodel.entities.TraceParameter;
 import org.jdiextractor.tracemodel.entities.TraceReceiver;
+import org.jdiextractor.tracemodel.entities.TraceValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayReference;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceArrayValue;
 import org.jdiextractor.tracemodel.entities.traceValues.TraceClassNotPrepared;
@@ -231,10 +232,15 @@ public class TraceSerializerJson extends TraceSerializer {
 	@Override
 	public void serialize(TraceValueAlreadyFound traceValueAlreadyFound) {
 		try {
+			// open object for the reference
+			writer.write(this.objectStart());
+			writer.write(quotes("reference") + ":");
 			writer.write(this.objectStart());
 			writer.write(quotes("alreadyFound") + ":" + "true");
 			writer.write(this.joinElementListing());
 			writer.write(quotes("uniqueId") + ":" + traceValueAlreadyFound.getUniqueID());
+			writer.write(this.objectEnd());
+			// close object for the reference
 			writer.write(this.objectEnd());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -277,13 +283,24 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	@Override
 	public void serialize(TraceArrayValue traceArrayValue) {
-		traceArrayValue.getValue().acceptSerializer(this);
+		TraceValue value = traceArrayValue.getValue();
+		if (value == null) {
+			try {
+				writer.write("null");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			value.acceptSerializer(this);
+		}
 	}
 
 	@Override
 	public void serialize(TraceClassNotPrepared traceClassNotPrepared) {
 		try {
+			this.ObjectReferenceStart(traceClassNotPrepared);
 			writer.write(quotes("<<CLASS_NOT_PREPARED>>"));
+			this.ObjectReferenceEnd(traceClassNotPrepared);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -374,6 +391,9 @@ public class TraceSerializerJson extends TraceSerializer {
 		writer.write(this.objectStart());
 		writer.write(quotes("type") + ":" + quotes(traceObjectReference.getType()));
 		writer.write(this.joinElementListing());
+		if (traceObjectReference.getUniqueID() == 220) {
+			int i = 0;
+		}
 		writer.write(quotes("uniqueId") + ":" + traceObjectReference.getUniqueID());
 		writer.write(this.joinElementListing());
 		writer.write(quotes("refered") + ":");

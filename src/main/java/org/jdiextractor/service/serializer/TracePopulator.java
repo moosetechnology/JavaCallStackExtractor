@@ -54,7 +54,7 @@ public class TracePopulator {
 	/**
 	 * All already visited object references
 	 */
-	private Set<ObjectReference> visited = new HashSet<>();
+	private Set<Long> visitedIds = new HashSet<>();
 
 	public TracePopulator(boolean valuesIndependents, int maxDepth) {
 		this.trace = new Trace();
@@ -118,7 +118,7 @@ public class TracePopulator {
 
 	public TraceMethod newMethodFrom(Method method) {
 		if (valuesIndependents) {
-			visited = new HashSet<>();
+			visitedIds = new HashSet<>();
 		}
 
 		TraceMethod traceMethod = new TraceMethod();
@@ -198,11 +198,14 @@ public class TracePopulator {
 	}
 
 	private TraceValue newValueFromObjectReference(ObjectReference objectReference, int depth) {
-
-		if (visited.contains(objectReference)) {
-			return new TraceValueAlreadyFound(objectReference.uniqueID());
+		long id = objectReference.uniqueID();
+		if (id == 220) {
+			int i = 0;
+		}
+		if (visitedIds.contains(id)) {
+			return new TraceValueAlreadyFound(id);
 		} else {
-			visited.add(objectReference);
+			visitedIds.add(id);
 			if (objectReference instanceof StringReference) {
 				return this.newStringReferenceFrom((StringReference) objectReference);
 			} else if (objectReference instanceof ArrayReference) {
@@ -219,7 +222,10 @@ public class TracePopulator {
 	private TraceValue newClassReferenceFrom(ObjectReference ref, ReferenceType type, int depth) {
 
 		if (!type.isPrepared()) {
-			return new TraceClassNotPrepared();
+			TraceClassNotPrepared traceClassNotPrepared = new TraceClassNotPrepared();
+			traceClassNotPrepared.setUniqueID(ref.uniqueID());
+			traceClassNotPrepared.setType(ref.referenceType().name());
+			return traceClassNotPrepared;
 		}
 		TraceClassReference traceClassReference = new TraceClassReference();
 		traceClassReference.setUniqueID(ref.uniqueID());
@@ -263,12 +269,12 @@ public class TracePopulator {
 			return traceArrayReference;
 		} else {
 
-			for (int i = 1; i < arrayValues.size(); i++) {
+			for (int i = 0; i < arrayValues.size(); i++) {
 				traceArrayReference.addArrayValue(this.newArrayValueFrom(depth, arrayValues, i));
 			}
 
 		}
-		return null;
+		return traceArrayReference;
 	}
 
 	private TraceArrayValue newArrayValueFrom(int depth, List<Value> arrayValues, int index) {
