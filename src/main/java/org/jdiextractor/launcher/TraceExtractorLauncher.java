@@ -1,6 +1,6 @@
 package org.jdiextractor.launcher;
 
-import org.jdiextractor.core.trace.TraceExtractor;
+import org.jdiextractor.core.TraceExtractor;
 
 public class TraceExtractorLauncher extends AbstractLauncher {
 	

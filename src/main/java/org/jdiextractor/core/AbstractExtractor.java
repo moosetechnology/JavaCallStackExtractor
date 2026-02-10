@@ -1,14 +1,21 @@
 package org.jdiextractor.core;
 
 import java.lang.reflect.Constructor;
+import java.util.List;
 
 import org.jdiextractor.config.BreakpointConfig;
 import org.jdiextractor.config.JDIExtractorConfig;
 import org.jdiextractor.service.breakpoint.BreakPointInstaller;
 import org.jdiextractor.service.breakpoint.BreakpointWrapper;
+import org.jdiextractor.service.serializer.TracePopulator;
 
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.ClassPrepareEvent;
@@ -45,6 +52,11 @@ public abstract class AbstractExtractor {
 	protected final JDIExtractorConfig config;
 
 	/**
+	 * The trace model built during execution
+	 */
+	protected TracePopulator tracePopulator;
+
+	/**
 	 * Initializes the extractor context.
 	 * <p>
 	 * <b>Note to implementors:</b> Your subclass MUST expose a public constructor
@@ -53,10 +65,13 @@ public abstract class AbstractExtractor {
 	 *
 	 * @param vm     The target Virtual Machine.
 	 * @param config The configuration object containing runtime settings.
+	 * @param wether the values are independants between all element of the trace or
+	 *               not
 	 */
-	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config) {
+	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config, boolean valuesIndependents) {
 		this.vm = vm;
 		this.config = config;
+		this.tracePopulator = new TracePopulator(valuesIndependents, config.getMaxDepth());
 	}
 
 	/**
@@ -194,6 +209,21 @@ public abstract class AbstractExtractor {
 		} catch (InterruptedException e) {
 			throw new IllegalStateException("Interruption during extraction: " + e.getMessage());
 		}
+	}
+
+	protected void createMethodWith(StackFrame frame) {
+		Method method = frame.location().method();
+		ObjectReference receiver = frame.thisObject();
+		List<Value> argValues;
+
+		try {
+			argValues = frame.getArgumentValues();
+		} catch (InternalException e) {
+			// Happens for native calls, and can't be obtained
+			argValues = null;
+		}
+
+		tracePopulator.newMethodFrom(method, argValues, receiver);
 	}
 
 	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread);

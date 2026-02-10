@@ -32,4 +32,8 @@ public class Trace extends TraceEntity {
 		serializer.serialize(this);
 	}
 
+	public int size() {
+		return elements.size();
+	}
+
 }

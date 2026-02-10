@@ -1,11 +1,8 @@
-package org.jdiextractor.core.trace;
+package org.jdiextractor.core;
 
 import org.jdiextractor.config.JDIExtractorConfig;
-import org.jdiextractor.core.AbstractExtractor;
 import org.jdiextractor.service.serializer.TraceLogger;
 import org.jdiextractor.service.serializer.TracePopulator;
-import org.jdiextractor.tracemodel.entities.Trace;
-import org.jdiextractor.tracemodel.entities.TraceMethod;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
@@ -22,7 +19,7 @@ public class TraceExtractor extends AbstractExtractor {
 	private TracePopulator tracePopulator;
 
 	public TraceExtractor(VirtualMachine vm, JDIExtractorConfig config) {
-		super(vm, config);
+		super(vm, config, true);
 		this.tracePopulator = new TracePopulator(config.getMaxDepth());
 	}
 
@@ -39,7 +36,7 @@ public class TraceExtractor extends AbstractExtractor {
 
 			this.processEventsUntil(config.getEndpoint());
 
-			TraceLogger serializer = new TraceLogger(config.getLogging(), config.getMaxDepth());
+			TraceLogger serializer = new TraceLogger(config.getLogging());
 			serializer.serialize(this.tracePopulator.getTrace());
 
 		} catch (IncompatibleThreadStateException e) {

@@ -4,7 +4,7 @@
 		"port": "5006"
 	},
 	"entrypoint": {
-		"className": "com.example.Victim",
+		"className": "com.example.ObjectRefSimulation",
 		"methodName": "main",
 		"methodArguments": [
 			"java.lang.String[]"

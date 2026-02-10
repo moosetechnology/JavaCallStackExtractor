@@ -1,6 +1,6 @@
 package org.jdiextractor.launcher;
 
-import org.jdiextractor.core.callstack.strategy.CallStackHistoryExtractor;
+import org.jdiextractor.core.CallStackHistoryExtractor;
 
 /**
  * Attach to a java virtual machine to extract the call stack to a text file

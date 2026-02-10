@@ -1,19 +1,12 @@
-package org.jdiextractor.core.callstack.strategy;
+package org.jdiextractor.core;
 
 import java.util.List;
 
 import org.jdiextractor.config.JDIExtractorConfig;
-import org.jdiextractor.core.callstack.AbstractCallStackExtractor;
 import org.jdiextractor.service.serializer.TraceLogger;
-import org.jdiextractor.service.serializer.TracePopulator;
-
 import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
@@ -25,16 +18,11 @@ import com.sun.jdi.event.StepEvent;
  * object was modified during execution, older frames will show the
  * <i>current</i> modified value, not the value at the time of the call.
  */
-public class CallStackSnapshotExtractor extends AbstractCallStackExtractor {
+public class CallStackSnapshotExtractor extends AbstractExtractor {
 
-	/**
-	 * The trace model built during execution
-	 */
-	private TracePopulator tracePopulator;
 
 	public CallStackSnapshotExtractor(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config, false);
-		this.tracePopulator = new TracePopulator(false, config.getMaxDepth());
 	}
 
 	@Override
@@ -76,18 +64,5 @@ public class CallStackSnapshotExtractor extends AbstractCallStackExtractor {
 		// Nothing, should not happen in this scenario
 	}
 
-	protected void createMethodWith(StackFrame frame) {
-		Method method = frame.location().method();
-		ObjectReference receiver = frame.thisObject();
-		List<Value> argValues;
-		
-		try {
-			argValues = frame.getArgumentValues();
-		} catch (InternalException e) {
-			// Happens for native calls, and can't be obtained
-			argValues = null;
-		}
 
-		tracePopulator.newMethodFrom(method, argValues, receiver);
-	}
 }

@@ -1,9 +1,9 @@
-package org.jdiextractor.core.callstack.strategy;
-
-import java.io.IOException;
+package org.jdiextractor.core;
 
 import org.jdiextractor.config.JDIExtractorConfig;
-import org.jdiextractor.core.callstack.AbstractCallStackExtractor;
+import org.jdiextractor.service.serializer.TraceLogger;
+import org.jdiextractor.service.serializer.TracePopulator;
+
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
@@ -18,23 +18,31 @@ import com.sun.jdi.request.StepRequest;
  * serialized at every step, it preserves the exact state of objects as they
  * were at the moment of execution.
  */
-public class CallStackHistoryExtractor extends AbstractCallStackExtractor {
+public class CallStackHistoryExtractor extends AbstractExtractor {
+
+	/**
+	 * The trace model built during execution
+	 */
+	private TracePopulator tracePopulator;
 
 	public CallStackHistoryExtractor(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config, true);
+
+		this.tracePopulator = new TracePopulator(false, config.getMaxDepth());
 	}
 
 	@Override
 	protected void executeExtraction() {
 		try {
 			this.collectFrames();
-			stackFrameLogger.writeAll();
+
+			// Serialize the trace
+			TraceLogger serializer = new TraceLogger(config.getLogging());
+			serializer.serialize(this.tracePopulator.getTrace());
 
 		} catch (IncompatibleThreadStateException e) {
 			// Should not happen because we are supposed to be at a breakpoint
 			throw new IllegalStateException("Thread should be at a breakpoint but isn't");
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -57,10 +65,10 @@ public class CallStackHistoryExtractor extends AbstractCallStackExtractor {
 	@Override
 	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
 		try {
-			if (stackFrameLogger.size() + 1 == targetThread.frameCount()) {
-				stackFrameLogger.push(targetThread.frame(0));
-			} else if (stackFrameLogger.size() - 1 == targetThread.frameCount()) {
-				stackFrameLogger.pop();
+			if (this.tracePopulator.getTrace().size() + 1 == targetThread.frameCount()) {
+				this.createMethodWith(targetThread.frame(0));
+			} else if (this.tracePopulator.getTrace().size() - 1 == targetThread.frameCount()) {
+				this.tracePopulator.getTrace().removeLastElement();
 			}
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);
@@ -71,4 +79,5 @@ public class CallStackHistoryExtractor extends AbstractCallStackExtractor {
 	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
 		// Nothing, should not happen in this scenario
 	}
+
 }
