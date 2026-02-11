@@ -4,7 +4,7 @@
 		"port": "5006"
 	},
 	"entrypoint": {
-		"className": "com.app.Victim",
+		"className": "com.example.ObjectRefSimulation",
 		"methodName": "main",
 		"methodArguments": [
 			"java.lang.String[]"
@@ -19,11 +19,9 @@
 		],
 		"repBefore": 0
 	},
-	"maxDepth" : 20,
+	"maxDepth" : 14,
 	"logging": {
-		"format"  : "json",
 		"outputName" : "JDIOutput",
 		"extension": "cs"
-		
 	}
 }

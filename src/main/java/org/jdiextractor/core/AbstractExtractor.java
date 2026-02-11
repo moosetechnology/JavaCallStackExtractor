@@ -1,11 +1,31 @@
 package org.jdiextractor.core;
 
 import java.lang.reflect.Constructor;
+import java.util.List;
 
+import org.jdiextractor.config.BreakpointConfig;
 import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.service.breakpoint.BreakPointInstaller;
+import org.jdiextractor.service.breakpoint.BreakpointWrapper;
+import org.jdiextractor.service.serializer.TracePopulator;
 
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.BreakpointEvent;
+import com.sun.jdi.event.ClassPrepareEvent;
+import com.sun.jdi.event.Event;
+import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.MethodEntryEvent;
+import com.sun.jdi.event.StepEvent;
+import com.sun.jdi.event.VMDeathEvent;
+import com.sun.jdi.event.VMDisconnectEvent;
+import com.sun.jdi.request.ClassPrepareRequest;
 
 /**
  * Base framework for implementing JDI-based analysis tools.
@@ -32,6 +52,11 @@ public abstract class AbstractExtractor {
 	protected final JDIExtractorConfig config;
 
 	/**
+	 * The trace model built during execution
+	 */
+	protected TracePopulator tracePopulator;
+
+	/**
 	 * Initializes the extractor context.
 	 * <p>
 	 * <b>Note to implementors:</b> Your subclass MUST expose a public constructor
@@ -40,10 +65,13 @@ public abstract class AbstractExtractor {
 	 *
 	 * @param vm     The target Virtual Machine.
 	 * @param config The configuration object containing runtime settings.
+	 * @param wether the values are independants between all element of the trace or
+	 *               not
 	 */
-	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config) {
+	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config, boolean valuesIndependents) {
 		this.vm = vm;
 		this.config = config;
+		this.tracePopulator = new TracePopulator(valuesIndependents, config.getMaxDepth());
 	}
 
 	/**
@@ -126,4 +154,79 @@ public abstract class AbstractExtractor {
 		}
 		return main;
 	}
+
+	protected void processEventsUntil(BreakpointConfig bkConfig) throws IncompatibleThreadStateException {
+		ThreadReference targetThread = this.getThread();
+
+		BreakpointWrapper bkWrap = null;
+		if (BreakPointInstaller.isClassLoaded(vm, bkConfig.getClassName())) {
+			bkWrap = BreakPointInstaller.addBreakpoint(vm, bkConfig);
+		} else {
+			ClassPrepareRequest cpReq = vm.eventRequestManager().createClassPrepareRequest();
+			cpReq.addClassFilter(bkConfig.getClassName());
+			cpReq.enable();
+		}
+
+		vm.resume();
+		EventSet eventSet;
+
+		try {
+			while ((eventSet = vm.eventQueue().remove()) != null) {
+				for (Event event : eventSet) {
+
+					if (event instanceof StepEvent) {
+						this.reactToStepEvent((StepEvent) event, targetThread);
+					}
+					if (event instanceof MethodEntryEvent) {
+						this.reactToMethodEntryEvent((MethodEntryEvent) event, targetThread);
+					}
+
+					else if (event instanceof VMDeathEvent || event instanceof VMDisconnectEvent) {
+						throw new IllegalStateException("VM disconnected or died before breakpoint");
+					}
+
+					else if (event instanceof BreakpointEvent) {
+						if (bkWrap == null) {
+							throw new IllegalStateException("Thread encountered a breakpoint while none has been set");
+						}
+						if (bkWrap.shouldStopAt(event)) {
+							return;
+						}
+					}
+
+					else if (event instanceof ClassPrepareEvent) {
+						if (BreakPointInstaller.isClassLoaded(vm, bkConfig.getClassName())) {
+							bkWrap = BreakPointInstaller.addBreakpoint(vm, bkConfig);
+						} else {
+							throw new IllegalStateException("ClassPrepareRequest caught but class is still not loaded");
+						}
+					}
+
+				}
+
+				eventSet.resume();
+			}
+		} catch (InterruptedException e) {
+			throw new IllegalStateException("Interruption during extraction: " + e.getMessage());
+		}
+	}
+
+	protected void createMethodWith(StackFrame frame) {
+		Method method = frame.location().method();
+		ObjectReference receiver = frame.thisObject();
+		List<Value> argValues;
+
+		try {
+			argValues = frame.getArgumentValues();
+		} catch (InternalException e) {
+			// Happens for native calls, and can't be obtained
+			argValues = null;
+		}
+
+		tracePopulator.newMethodFrom(method, argValues, receiver);
+	}
+
+	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread);
+
+	protected abstract void reactToStepEvent(StepEvent event, ThreadReference targetThread);
 }

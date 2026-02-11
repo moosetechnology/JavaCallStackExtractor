@@ -1,17 +1,15 @@
 package org.jdiextractor.tracemodel.entities;
 
+import org.jdiextractor.service.serializer.TraceSerializer;
 import org.jdiextractor.tracemodel.TraceEntity;
 
-/**
- * Argument given to a {@link TraceMethod} during execution
- */
-public class Argument extends TraceEntity implements ValueContainer {
+public class TraceReceiver extends TraceEntity implements TraceValueContainer {
 
 	private TraceMethod method;
 
 	private TraceValue value;
 
-	public Argument() {
+	public TraceReceiver() {
 
 	}
 
@@ -32,6 +30,11 @@ public class Argument extends TraceEntity implements ValueContainer {
 	public void setValue(TraceValue value) {
 		this.value = value;
 
+	}
+
+	@Override
+	public void acceptSerializer(TraceSerializer serializer) {
+		serializer.serialize(this);
 	}
 
 }
