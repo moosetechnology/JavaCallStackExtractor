@@ -7,11 +7,13 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
-import com.sun.jdi.request.MethodEntryRequest;
+import com.sun.jdi.request.StepRequest;
 
-public class TraceExtractor extends AbstractExtractor {
+public class TraceExtractorStep extends AbstractExtractor {
 
-	public TraceExtractor(VirtualMachine vm, JDIExtractorConfig config) {
+	private int frameCountBefore;
+
+	public TraceExtractorStep(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config, true);
 	}
 
@@ -21,10 +23,13 @@ public class TraceExtractor extends AbstractExtractor {
 		// MethodEntry
 		try {
 			this.processEventsUntil(config.getEntrypoint());
+			
+			// Fix for the first method being the main
+			this.createMethodWith(this.getThread().frame(0));
+			frameCountBefore = 1;
 
-			MethodEntryRequest entryRequest = vm.eventRequestManager().createMethodEntryRequest();
-			entryRequest.addThreadFilter(getThread());
-			entryRequest.enable();
+			vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN, StepRequest.STEP_INTO)
+					.enable();
 
 			this.processEventsUntil(config.getEndpoint());
 
@@ -38,12 +43,24 @@ public class TraceExtractor extends AbstractExtractor {
 
 	@Override
 	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
-		// Nothing, should not happen in this scenario
+		try {
+			int frameCountNow = targetThread.frameCount();
+
+			if (frameCountBefore != frameCountNow) {
+				if (frameCountBefore + 1 == frameCountNow) {
+					this.tracePopulator.newMethodFrom(targetThread.frame(0).location().method());
+				}
+				frameCountBefore = frameCountNow;
+			}
+
+		} catch (IncompatibleThreadStateException e) {
+			throw new IllegalStateException("Exception occured during a step event : " + e);
+		}
 	}
 
 	@Override
 	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
-		this.tracePopulator.newMethodFrom(event.method());
+		throw new IllegalStateException("Exception occured during a step event : ");
 	}
 
 }
