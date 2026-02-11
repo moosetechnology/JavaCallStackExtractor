@@ -19,7 +19,7 @@
 		],
 		"repBefore": 0
 	},
-	"maxDepth" : 20,
+	"maxDepth" : 14,
 	"logging": {
 		"outputName" : "JDIOutput",
 		"extension": "cs"

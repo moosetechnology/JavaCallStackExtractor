@@ -2,7 +2,7 @@ package org.jdiextractor.core;
 
 import org.jdiextractor.config.JDIExtractorConfig;
 import org.jdiextractor.service.serializer.TraceLogger;
-import org.jdiextractor.service.serializer.TracePopulator;
+import org.jdiextractor.tracemodel.entities.Trace;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
@@ -20,15 +20,9 @@ import com.sun.jdi.request.StepRequest;
  */
 public class CallStackHistoryExtractor extends AbstractExtractor {
 
-	/**
-	 * The trace model built during execution
-	 */
-	private TracePopulator tracePopulator;
 
 	public CallStackHistoryExtractor(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config, true);
-
-		this.tracePopulator = new TracePopulator(false, config.getMaxDepth());
 	}
 
 	@Override
@@ -65,10 +59,14 @@ public class CallStackHistoryExtractor extends AbstractExtractor {
 	@Override
 	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
 		try {
-			if (this.tracePopulator.getTrace().size() + 1 == targetThread.frameCount()) {
+			Trace trace = this.tracePopulator.getTrace();
+			int size = trace.size();
+			int frameCount = targetThread.frameCount();
+			
+			if (size + 1 == frameCount) {
 				this.createMethodWith(targetThread.frame(0));
-			} else if (this.tracePopulator.getTrace().size() - 1 == targetThread.frameCount()) {
-				this.tracePopulator.getTrace().removeLastElement();
+			} else if (size - 1 == frameCount) {
+				trace.removeLastElement();
 			}
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);
