@@ -9,9 +9,9 @@ import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.MethodEntryRequest;
 
-public class TraceExtractor extends AbstractExtractor {
+public class TraceExtractorMethodEntries extends AbstractExtractor {
 
-	public TraceExtractor(VirtualMachine vm, JDIExtractorConfig config) {
+	public TraceExtractorMethodEntries(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config, true);
 	}
 
