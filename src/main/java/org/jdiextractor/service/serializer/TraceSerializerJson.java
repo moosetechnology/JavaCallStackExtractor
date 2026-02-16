@@ -29,18 +29,18 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceValueMaxDepth;
 public class TraceSerializerJson extends TraceSerializer {
 
 	private BufferedWriter writer;
-	private boolean valueIdependents;
+	private boolean valueIndependents;
 
-	public TraceSerializerJson(BufferedWriter writer, boolean valueIdependents) {
+	public TraceSerializerJson(BufferedWriter writer, boolean valueIndependents) {
 		this.writer = writer;
-		this.valueIdependents = valueIdependents;
+		this.valueIndependents = valueIndependents;
 	}
 
 	@Override
 	public void serialize(Trace trace) {
 		try {
 			writer.write(this.objectStart());
-			writer.write(quotes("valueIdependents") + ":" + valueIdependents);
+			writer.write(quotes("valueIndependents") + ":" + valueIndependents);
 			writer.write(this.joinElementListing());
 
 			writer.write(quotes("Lines") + ":");

@@ -24,7 +24,6 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceValueAlreadyFound;
 
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ArrayReference;
-import com.sun.jdi.ClassObjectReference;
 import com.sun.jdi.Field;
 import com.sun.jdi.LocalVariable;
 import com.sun.jdi.Method;
@@ -202,9 +201,6 @@ public class TracePopulator {
 				return this.newStringReferenceFrom((StringReference) objectReference);
 			} else if (objectReference instanceof ArrayReference) {
 				return this.newArrayReferenceFrom((ArrayReference) objectReference, depth);
-			} else if (objectReference instanceof ClassObjectReference) {
-				return this.newClassReferenceFrom(objectReference,
-						((ClassObjectReference) objectReference).reflectedType(), depth);
 			} else {
 				return this.newClassReferenceFrom(objectReference, objectReference.referenceType(), depth);
 			}
@@ -282,11 +278,6 @@ public class TracePopulator {
 		traceStringReference.setType(stringReference.referenceType().name());
 		return traceStringReference;
 	}
-
-	/**
-	 * --------------------------------------- UTILS
-	 * ---------------------------------------
-	 */
 
 	/**
 	 * Adapt the parent type of the method to make sure it matches moose parent
