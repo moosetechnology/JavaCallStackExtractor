@@ -1,7 +1,6 @@
 package org.jdiextractor.core;
 
 import org.jdiextractor.config.JDIExtractorConfig;
-import org.jdiextractor.service.serializer.TraceLogger;
 import org.jdiextractor.tracemodel.entities.Trace;
 
 import com.sun.jdi.IncompatibleThreadStateException;
@@ -20,7 +19,6 @@ import com.sun.jdi.request.StepRequest;
  */
 public class CallStackHistoryExtractor extends AbstractExtractor {
 
-
 	public CallStackHistoryExtractor(VirtualMachine vm, JDIExtractorConfig config) {
 		super(vm, config, true);
 	}
@@ -29,11 +27,7 @@ public class CallStackHistoryExtractor extends AbstractExtractor {
 	protected void executeExtraction() {
 		try {
 			this.collectFrames();
-
-			// Serialize the trace
-			TraceLogger serializer = new TraceLogger(config.getLogging());
-			serializer.serialize(this.tracePopulator.getTrace());
-
+			this.serializeTrace();
 		} catch (IncompatibleThreadStateException e) {
 			// Should not happen because we are supposed to be at a breakpoint
 			throw new IllegalStateException("Thread should be at a breakpoint but isn't");
@@ -62,7 +56,7 @@ public class CallStackHistoryExtractor extends AbstractExtractor {
 			Trace trace = this.tracePopulator.getTrace();
 			int size = trace.size();
 			int frameCount = targetThread.frameCount();
-			
+
 			if (size + 1 == frameCount) {
 				this.createMethodWith(targetThread.frame(0));
 			} else if (size - 1 == frameCount) {

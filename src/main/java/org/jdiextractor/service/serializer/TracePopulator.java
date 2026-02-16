@@ -41,10 +41,8 @@ public class TracePopulator {
 	/**
 	 * whether the values are independents with each other, if they are, visited is
 	 * reseted between each between each TraceElement creation
-	 * 
-	 * By default true
 	 */
-	private boolean valuesIndependents = true;
+	private boolean valuesIndependents;
 
 	/**
 	 * The maximum depth of the object graph
@@ -62,10 +60,6 @@ public class TracePopulator {
 		this.maxDepth = maxDepth;
 	}
 
-	public TracePopulator(int maxDepth) {
-		this.trace = new Trace();
-		this.maxDepth = maxDepth;
-	}
 
 	public Trace getTrace() {
 		return this.trace;
@@ -199,6 +193,7 @@ public class TracePopulator {
 
 	private TraceValue newValueFromObjectReference(ObjectReference objectReference, int depth) {
 		long id = objectReference.uniqueID();
+
 		if (visitedIds.contains(id)) {
 			return new TraceValueAlreadyFound(id);
 		} else {

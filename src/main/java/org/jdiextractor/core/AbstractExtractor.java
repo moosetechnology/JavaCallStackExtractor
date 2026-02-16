@@ -7,6 +7,7 @@ import org.jdiextractor.config.BreakpointConfig;
 import org.jdiextractor.config.JDIExtractorConfig;
 import org.jdiextractor.service.breakpoint.BreakPointInstaller;
 import org.jdiextractor.service.breakpoint.BreakpointWrapper;
+import org.jdiextractor.service.serializer.TraceLogger;
 import org.jdiextractor.service.serializer.TracePopulator;
 
 import com.sun.jdi.IncompatibleThreadStateException;
@@ -57,7 +58,12 @@ public abstract class AbstractExtractor {
 	protected TracePopulator tracePopulator;
 
 	/**
-	 * Initializes the extractor context.
+	 * Whether the values are independents between all element of the trace or not
+	 */
+	protected boolean valuesIndependents;
+
+	/**
+	 * Initialises the extractor context.
 	 * <p>
 	 * <b>Note to implementors:</b> Your subclass MUST expose a public constructor
 	 * matching this signature to be compatible with the
@@ -65,19 +71,20 @@ public abstract class AbstractExtractor {
 	 *
 	 * @param vm     The target Virtual Machine.
 	 * @param config The configuration object containing runtime settings.
-	 * @param wether the values are independants between all element of the trace or
+	 * @param whether the values are independents between all element of the trace or
 	 *               not
 	 */
 	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config, boolean valuesIndependents) {
 		this.vm = vm;
 		this.config = config;
+		this.valuesIndependents = valuesIndependents;
 		this.tracePopulator = new TracePopulator(valuesIndependents, config.getMaxDepth());
 	}
 
 	/**
 	 * Defines the main execution logic of the extractor.
 	 * <p>
-	 * Implement this method to define the specific behavior of your tool. This
+	 * Implement this method to define the specific behaviour of your tool. This
 	 * method is automatically called by the framework after successful
 	 * instantiation.
 	 */
@@ -226,7 +233,13 @@ public abstract class AbstractExtractor {
 		tracePopulator.newMethodFrom(method, argValues, receiver);
 	}
 
+	protected void serializeTrace() {
+		TraceLogger serializer = new TraceLogger(config.getLogging(), this.valuesIndependents);
+		serializer.serialize(this.tracePopulator.getTrace());
+	}
+
 	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread);
 
 	protected abstract void reactToStepEvent(StepEvent event, ThreadReference targetThread);
+
 }

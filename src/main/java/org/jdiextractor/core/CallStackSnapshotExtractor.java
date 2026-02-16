@@ -3,7 +3,6 @@ package org.jdiextractor.core;
 import java.util.List;
 
 import org.jdiextractor.config.JDIExtractorConfig;
-import org.jdiextractor.service.serializer.TraceLogger;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
@@ -38,9 +37,7 @@ public class CallStackSnapshotExtractor extends AbstractExtractor {
 				this.createMethodWith(next);
 			}
 
-			// Serialize the trace
-			TraceLogger serializer = new TraceLogger(config.getLogging());
-			serializer.serialize(this.tracePopulator.getTrace());
+			this.serializeTrace();
 
 		} catch (IncompatibleThreadStateException e) {
 			// Should not happen because we are supposed to be at a breakpoint
