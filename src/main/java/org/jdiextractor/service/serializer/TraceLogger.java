@@ -3,7 +3,8 @@ package org.jdiextractor.service.serializer;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import org.jdiextractor.config.LoggingConfig;
+
+import org.jdiextractor.config.components.LoggingConfig;
 import org.jdiextractor.tracemodel.entities.Trace;
 
 public class TraceLogger {

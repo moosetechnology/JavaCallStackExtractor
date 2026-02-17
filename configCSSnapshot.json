@@ -1,0 +1,27 @@
+{
+	"vm": {
+		"host": "localhost",
+		"port": "5006"
+	},
+	"entrypoint": {
+		"className": "com.example.Victim",
+		"methodName": "main",
+		"methodArguments": [
+			"java.lang.String[]"
+		],
+		"repBefore": 0
+	},
+	"endpoint": {
+		"className": "java.lang.Runtime",
+		"methodName": "exec",
+		"methodArguments": [
+			"java.lang.String"
+		],
+		"repBefore": 0
+	},
+	"maxDepth" : 14,
+	"logging": {
+		"outputName" : "JDIOutput",
+		"extension": "cs"
+	}
+}

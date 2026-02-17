@@ -2,10 +2,10 @@ package org.jdiextractor.core;
 
 import java.util.List;
 
-import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.config.CallStackSnapshotExtractorConfig;
+
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
-import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 
@@ -16,11 +16,11 @@ import com.sun.jdi.event.StepEvent;
  * object was modified during execution, older frames will show the
  * <i>current</i> modified value, not the value at the time of the call.
  */
-public class CallStackSnapshotExtractor extends AbstractExtractor {
+public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnapshotExtractorConfig> {
 
 
-	public CallStackSnapshotExtractor(VirtualMachine vm, JDIExtractorConfig config) {
-		super(vm, config, false);
+	public CallStackSnapshotExtractor() {
+		super(false);
 	}
 
 	@Override

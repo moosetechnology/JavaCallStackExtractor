@@ -1,10 +1,9 @@
 package org.jdiextractor.core;
 
-import java.lang.reflect.Constructor;
 import java.util.List;
 
-import org.jdiextractor.config.BreakpointConfig;
-import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.config.AbstractExtractorConfig;
+import org.jdiextractor.config.components.BreakpointConfig;
 import org.jdiextractor.service.breakpoint.BreakPointInstaller;
 import org.jdiextractor.service.breakpoint.BreakpointWrapper;
 import org.jdiextractor.service.serializer.TraceLogger;
@@ -36,21 +35,21 @@ import com.sun.jdi.request.ClassPrepareRequest;
  * {@link #executeExtraction()}.
  * <p>
  * To run an extractor, use the static
- * {@link #launch(Class, VirtualMachine, JDIExtractorConfig)} method, which
+ * {@link #launch(Class, VirtualMachine, AbstractExtractorConfig)} method, which
  * handles the instantiation and execution lifecycle.
  */
-public abstract class AbstractExtractor {
+public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 
 	/**
 	 * The target Virtual Machine being analyzed. Accessible to subclasses for
 	 * adding requests and accessing memory.
 	 */
-	protected final VirtualMachine vm;
+	protected VirtualMachine vm;
 
 	/**
 	 * The configuration settings for the current extraction session.
 	 */
-	protected final JDIExtractorConfig config;
+	protected T config;
 
 	/**
 	 * The trace model built during execution
@@ -63,22 +62,26 @@ public abstract class AbstractExtractor {
 	protected boolean valuesIndependents;
 
 	/**
-	 * Initialises the extractor context.
-	 * <p>
-	 * <b>Note to implementors:</b> Your subclass MUST expose a public constructor
-	 * matching this signature to be compatible with the
-	 * {@link #launch(Class, VirtualMachine, JDIExtractorConfig)} facility.
-	 *
-	 * @param vm      The target Virtual Machine.
-	 * @param config  The configuration object containing runtime settings.
-	 * @param whether the values are independents between all element of the trace
-	 *                or not
+	 * Only entry point to launch an extractor
+	 * 
+	 * @param vm     The target Virtual Machine.
+	 * @param config The configuration object containing runtime settings.
 	 */
-	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config, boolean valuesIndependents) {
-		this.vm = vm;
-		this.config = config;
+	public void launch(VirtualMachine vm, T config) {
+		this.setVM(vm);
+		this.setConfig(config);
+		this.createTracePopulator();
+		this.executeExtraction();
+	}
+
+	/**
+	 * Initialises the extractor
+	 * 
+	 * @param valuesIndependents whether the values are independents between all
+	 *                           element of the trace or not
+	 */
+	protected AbstractExtractor(boolean valuesIndependents) {
 		this.valuesIndependents = valuesIndependents;
-		this.tracePopulator = new TracePopulator(valuesIndependents, config.getMaxDepth());
 	}
 
 	/**
@@ -90,45 +93,16 @@ public abstract class AbstractExtractor {
 	 */
 	protected abstract void executeExtraction();
 
-	/**
-	 * Bootstraps and executes a specific extractor strategy.
-	 * <p>
-	 * This utility method handles the instantiation of the provided
-	 * {@code extractorClass} using reflection and triggers the
-	 * {@link #executeExtraction()} method.
-	 *
-	 * @param extractorClass The concrete class of the extractor to run (e.g.,
-	 *                       {@code CallstackExtractor.class}).
-	 * @param vm             The connected Virtual Machine instance.
-	 * @param config         The configuration to use for this session.
-	 * @throws IllegalArgumentException If the provided class does not have a public
-	 *                                  constructor accepting
-	 *                                  {@code (VirtualMachine, JDIExtractorConfig)}.
-	 * @throws RuntimeException         If the extractor fails to initialize or
-	 *                                  encounters a critical error during
-	 *                                  execution.
-	 */
-	public static void launch(Class<? extends AbstractExtractor> extractorClass, VirtualMachine vm,
-			JDIExtractorConfig config) {
-		Constructor<? extends AbstractExtractor> constructor;
-		AbstractExtractor instance;
+	private void setConfig(T config) {
+		this.config = config;
+	}
 
-		// 1. Locate the required constructor
-		try {
-			constructor = extractorClass.getConstructor(VirtualMachine.class, JDIExtractorConfig.class);
-		} catch (NoSuchMethodException e) {
-			throw new IllegalArgumentException("Invalid Extractor implementation: The class " + extractorClass.getName()
-					+ " must provide a public constructor accepting (VirtualMachine, JDIExtractorConfig).");
-		}
-		// 2. Instantiate the concrete extractor
-		try {
-			instance = constructor.newInstance(vm, config);
-		} catch (Exception e) {
-			throw new RuntimeException("Critical failure while launching the extractor: " + e.getMessage(), e);
-		}
-		// 3. Trigger the extraction logic
-		instance.executeExtraction();
+	private void setVM(VirtualMachine vm) {
+		this.vm = vm;
+	}
 
+	protected void createTracePopulator() {
+		this.tracePopulator = new TracePopulator(valuesIndependents, config.getMaxDepth());
 	}
 
 	/**

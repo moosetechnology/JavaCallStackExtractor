@@ -1,9 +1,9 @@
 package org.jdiextractor.core;
 
-import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.config.TraceExtractorStepConfig;
+
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.StepRequest;
@@ -15,12 +15,12 @@ import com.sun.jdi.request.StepRequest;
  * Note : To enable full trace mode of an execution, define endpoint repBefore
  * at a negative number
  */
-public class TraceExtractorStep extends AbstractExtractor {
+public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConfig> {
 
 	private int frameCountBefore;
 
-	public TraceExtractorStep(VirtualMachine vm, JDIExtractorConfig config) {
-		super(vm, config, true);
+	public TraceExtractorStep() {
+		super(true);
 	}
 
 	@Override

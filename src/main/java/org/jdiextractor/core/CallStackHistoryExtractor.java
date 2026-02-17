@@ -1,11 +1,10 @@
 package org.jdiextractor.core;
 
-import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.config.CallStackHistoryExtractorConfig;
 import org.jdiextractor.tracemodel.entities.Trace;
 
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.StepRequest;
@@ -17,10 +16,10 @@ import com.sun.jdi.request.StepRequest;
  * serialized at every step, it preserves the exact state of objects as they
  * were at the moment of execution.
  */
-public class CallStackHistoryExtractor extends AbstractExtractor {
+public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistoryExtractorConfig> {
 
-	public CallStackHistoryExtractor(VirtualMachine vm, JDIExtractorConfig config) {
-		super(vm, config, true);
+	public CallStackHistoryExtractor() {
+		super(true);
 	}
 
 	@Override

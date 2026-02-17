@@ -1,4 +1,4 @@
-package org.jdiextractor.config;
+package org.jdiextractor.config.components;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

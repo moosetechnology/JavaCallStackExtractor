@@ -1,4 +1,4 @@
-package org.jdiextractor.config;
+package org.jdiextractor.config.components;
 
 import java.util.ArrayList;
 import java.util.Iterator;

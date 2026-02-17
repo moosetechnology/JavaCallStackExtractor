@@ -2,7 +2,7 @@ package org.jdiextractor.service.breakpoint;
 
 import java.util.List;
 
-import org.jdiextractor.config.BreakpointConfig;
+import org.jdiextractor.config.components.BreakpointConfig;
 
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Location;

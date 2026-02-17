@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.util.Map;
 
-import org.jdiextractor.config.VmConfig;
+import org.jdiextractor.config.components.VmConfig;
 
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.VirtualMachine;

@@ -3,7 +3,7 @@ package org.jdiextractor.launcher;
 import java.io.File;
 import java.io.IOException;
 
-import org.jdiextractor.config.JDIExtractorConfig;
+import org.jdiextractor.config.AbstractExtractorConfig;
 import org.jdiextractor.core.AbstractExtractor;
 import org.jdiextractor.service.connector.JDIAttach;
 
@@ -11,19 +11,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jdi.VirtualMachine;
 
-public abstract class AbstractLauncher {
+public abstract class AbstractLauncher<T extends AbstractExtractorConfig> {
 
-	private static long startTime;
+	private long startTime;
 
-	protected static void mainCore(String[] args, Class<? extends AbstractExtractor> clazz) throws Exception {
+	protected void mainCore(String[] args, AbstractExtractor<T> extractor) throws Exception {
 		startRecordTime();
 
-		JDIExtractorConfig config = configFrom(args);
+		
+        JsonNode configNode = loadJsonNode(args);
+        T config = parseConfig(configNode);
 
 		// creating the VmManager using JDIAttach to find the vm
 		VirtualMachine vm = (new JDIAttach()).attachToJDI(config.getVm());
 
-		AbstractExtractor.launch(clazz, vm, config);
+		extractor.launch(vm, config);
 
 		// Properly disconnecting
 		try {
@@ -34,32 +36,27 @@ public abstract class AbstractLauncher {
 
 		endRecordTime();
 	}
+	
 
-	private static void startRecordTime() {
+	private void startRecordTime() {
 		startTime = System.nanoTime();
 	}
 
-	private static void endRecordTime() {
+	private void endRecordTime() {
 		System.out.println("Execution took : " + (System.nanoTime() - startTime) + " nanoseconds");
 	}
+	
+	protected abstract T parseConfig(JsonNode node);
+	
+	protected abstract String configFileDefaultName();
 
-	private static JDIExtractorConfig configFrom(String[] args) {
-		// reading the config file
-		String configFileName;
-		JsonNode configNode = null;
-		if (args.length == 0) {
-			configFileName = "config.json";
-		} else {
-			configFileName = args[0];
-		}
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			configNode = mapper.readTree(new File(configFileName));
+    private JsonNode loadJsonNode(String[] args) {
+        String fileName = (args.length == 0) ? this.configFileDefaultName() : args[0];
+        try {
+            return new ObjectMapper().readTree(new File(fileName));
+        } catch (IOException e) {
+            throw new RuntimeException("Config file not readable : ", e);
+        }
+    }
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return JDIExtractorConfig.fromJson(configNode);
-	}
 }

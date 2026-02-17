@@ -1,6 +1,9 @@
 package org.jdiextractor.launcher;
 
+import org.jdiextractor.config.CallStackHistoryExtractorConfig;
 import org.jdiextractor.core.CallStackHistoryExtractor;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Attach to a java virtual machine to extract the call stack to a text file
@@ -10,10 +13,24 @@ import org.jdiextractor.core.CallStackHistoryExtractor;
  * Since data is serialized at every step, it preserves the exact state 
  * of objects as they were at the moment of execution.
  */
-public class HistoryCSExtractorLauncher extends AbstractLauncher {
+public class HistoryCSExtractorLauncher extends AbstractLauncher<CallStackHistoryExtractorConfig> {
+	
+	private final String configFileDefaultName = "configCSHistory.json";
 
 	public static void main(String[] args) throws Exception {
-		mainCore(args, CallStackHistoryExtractor.class);
+		HistoryCSExtractorLauncher launcher = new HistoryCSExtractorLauncher();
+		
+		launcher.mainCore(args, new CallStackHistoryExtractor());
+	}
+
+	@Override
+	protected CallStackHistoryExtractorConfig parseConfig(JsonNode node) {
+		return CallStackHistoryExtractorConfig.fromJson(node);
+	}
+
+	@Override
+	protected String configFileDefaultName() {
+		return configFileDefaultName;
 	}
 
 }
