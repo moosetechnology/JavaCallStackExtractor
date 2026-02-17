@@ -51,8 +51,9 @@ public class CallStackHistoryExtractor extends AbstractExtractor {
 	}
 
 	@Override
-	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
+	protected void reactToStepEvent(StepEvent event) {
 		try {
+			ThreadReference targetThread = event.thread();
 			Trace trace = this.tracePopulator.getTrace();
 			int size = trace.size();
 			int frameCount = targetThread.frameCount();
@@ -68,7 +69,7 @@ public class CallStackHistoryExtractor extends AbstractExtractor {
 	}
 
 	@Override
-	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
+	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
 		// Nothing, should not happen in this scenario
 	}
 

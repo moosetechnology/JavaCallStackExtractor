@@ -5,7 +5,6 @@ import java.util.List;
 import org.jdiextractor.config.JDIExtractorConfig;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
-import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
@@ -52,12 +51,12 @@ public class CallStackSnapshotExtractor extends AbstractExtractor {
 	}
 
 	@Override
-	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
+	protected void reactToStepEvent(StepEvent event) {
 		// Nothing, should not happen in this scenario
 	}
 
 	@Override
-	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
+	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
 		// Nothing, should not happen in this scenario
 	}
 

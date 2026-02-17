@@ -18,20 +18,23 @@ public class TraceExtractorStep extends AbstractExtractor {
 
 	@Override
 	protected void executeExtraction() {
-		// Wait until the vm is at the start of the main before reacting to each
-		// MethodEntry
+
 		try {
+			// Wait until the vm is at the start of the main before reacting to each
+			// MethodEntry
 			this.processEventsUntil(config.getEntrypoint());
-			
+
 			// Fix for the first method being the main
 			this.createMethodWith(this.getThread().frame(0));
 			frameCountBefore = 1;
 
-			vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN, StepRequest.STEP_INTO)
-					.enable();
+			StepRequest request = vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN,
+					StepRequest.STEP_INTO);
 
-			this.processEventsUntil(config.getEndpoint());
+			request.setSuspendPolicy(StepRequest.SUSPEND_EVENT_THREAD);
+			request.enable();
 
+			this.processEventsUntilEnd();
 			this.serializeTrace();
 
 		} catch (IncompatibleThreadStateException e) {
@@ -40,8 +43,9 @@ public class TraceExtractorStep extends AbstractExtractor {
 	}
 
 	@Override
-	protected void reactToStepEvent(StepEvent event, ThreadReference targetThread) {
+	protected void reactToStepEvent(StepEvent event) {
 		try {
+			ThreadReference targetThread = event.thread();
 			int frameCountNow = targetThread.frameCount();
 
 			if (frameCountBefore != frameCountNow) {
@@ -57,7 +61,7 @@ public class TraceExtractorStep extends AbstractExtractor {
 	}
 
 	@Override
-	protected void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread) {
+	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
 		throw new IllegalStateException("Exception occured during a step event : ");
 	}
 

@@ -26,7 +26,11 @@ public abstract class AbstractLauncher {
 		AbstractExtractor.launch(clazz, vm, config);
 
 		// Properly disconnecting
-		vm.dispose();
+		try {
+			vm.dispose();
+		} catch (Exception e) {
+			// An exception mean VM already died before
+		}
 
 		endRecordTime();
 	}

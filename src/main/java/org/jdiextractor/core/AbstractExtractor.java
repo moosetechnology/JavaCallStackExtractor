@@ -69,10 +69,10 @@ public abstract class AbstractExtractor {
 	 * matching this signature to be compatible with the
 	 * {@link #launch(Class, VirtualMachine, JDIExtractorConfig)} facility.
 	 *
-	 * @param vm     The target Virtual Machine.
-	 * @param config The configuration object containing runtime settings.
-	 * @param whether the values are independents between all element of the trace or
-	 *               not
+	 * @param vm      The target Virtual Machine.
+	 * @param config  The configuration object containing runtime settings.
+	 * @param whether the values are independents between all element of the trace
+	 *                or not
 	 */
 	public AbstractExtractor(VirtualMachine vm, JDIExtractorConfig config, boolean valuesIndependents) {
 		this.vm = vm;
@@ -162,16 +162,24 @@ public abstract class AbstractExtractor {
 		return main;
 	}
 
+	/**
+	 * Process all events until the given breakpoint is encountered, if no
+	 * breakpoint given process until end
+	 * 
+	 * @param bkConfig
+	 * @throws IncompatibleThreadStateException
+	 */
 	protected void processEventsUntil(BreakpointConfig bkConfig) throws IncompatibleThreadStateException {
-		ThreadReference targetThread = this.getThread();
 
 		BreakpointWrapper bkWrap = null;
-		if (BreakPointInstaller.isClassLoaded(vm, bkConfig.getClassName())) {
-			bkWrap = BreakPointInstaller.addBreakpoint(vm, bkConfig);
-		} else {
-			ClassPrepareRequest cpReq = vm.eventRequestManager().createClassPrepareRequest();
-			cpReq.addClassFilter(bkConfig.getClassName());
-			cpReq.enable();
+		if (bkConfig != null) {
+			if (BreakPointInstaller.isClassLoaded(vm, bkConfig.getClassName())) {
+				bkWrap = BreakPointInstaller.addBreakpoint(vm, bkConfig);
+			} else {
+				ClassPrepareRequest cpReq = vm.eventRequestManager().createClassPrepareRequest();
+				cpReq.addClassFilter(bkConfig.getClassName());
+				cpReq.enable();
+			}
 		}
 
 		vm.resume();
@@ -182,14 +190,20 @@ public abstract class AbstractExtractor {
 				for (Event event : eventSet) {
 
 					if (event instanceof StepEvent) {
-						this.reactToStepEvent((StepEvent) event, targetThread);
+						this.reactToStepEvent((StepEvent) event);
 					}
 					if (event instanceof MethodEntryEvent) {
-						this.reactToMethodEntryEvent((MethodEntryEvent) event, targetThread);
+						this.reactToMethodEntryEvent((MethodEntryEvent) event);
 					}
 
 					else if (event instanceof VMDeathEvent || event instanceof VMDisconnectEvent) {
-						throw new IllegalStateException("VM disconnected or died before breakpoint");
+						if (bkConfig != null) {
+							// if bkConfig is not null then VM is not expected to terminate this way
+							throw new IllegalStateException("VM disconnected or died before breakpoint");
+						} else {
+							// if bkConfig is null then VM is expected to terminate this way
+							return;
+						}
 					}
 
 					else if (event instanceof BreakpointEvent) {
@@ -218,6 +232,15 @@ public abstract class AbstractExtractor {
 		}
 	}
 
+	/**
+	 * Process all events of the main thread until the VM dies or disconnect
+	 * 
+	 * @throws IncompatibleThreadStateException
+	 */
+	protected void processEventsUntilEnd() throws IncompatibleThreadStateException {
+		this.processEventsUntil(null);
+	}
+
 	protected void createMethodWith(StackFrame frame) {
 		Method method = frame.location().method();
 		ObjectReference receiver = frame.thisObject();
@@ -238,8 +261,8 @@ public abstract class AbstractExtractor {
 		serializer.serialize(this.tracePopulator.getTrace());
 	}
 
-	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event, ThreadReference targetThread);
+	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event);
 
-	protected abstract void reactToStepEvent(StepEvent event, ThreadReference targetThread);
+	protected abstract void reactToStepEvent(StepEvent event);
 
 }
