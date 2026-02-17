@@ -8,6 +8,13 @@ import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.StepRequest;
 
+/**
+ * Extracts the trace of an execution, meaning all method calls and their values
+ * at each instant
+ * 
+ * Note : To enable full trace mode of an execution, define endpoint repBefore
+ * at a negative number
+ */
 public class TraceExtractorStep extends AbstractExtractor {
 
 	private int frameCountBefore;
@@ -28,13 +35,14 @@ public class TraceExtractorStep extends AbstractExtractor {
 			this.createMethodWith(this.getThread().frame(0));
 			frameCountBefore = 1;
 
-			StepRequest request = vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN,
-					StepRequest.STEP_INTO);
+			vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN, StepRequest.STEP_INTO)
+					.enable();
+			if (config.getEndpoint().getRepBefore() < 0) {
+				this.processEventsUntilEnd();
+			} else {
+				this.processEventsUntil(config.getEndpoint());
+			}
 
-			request.setSuspendPolicy(StepRequest.SUSPEND_EVENT_THREAD);
-			request.enable();
-
-			this.processEventsUntilEnd();
 			this.serializeTrace();
 
 		} catch (IncompatibleThreadStateException e) {
