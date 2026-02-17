@@ -97,6 +97,11 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	@Override
 	public void serialize(TraceMethod traceMethod) {
+		// NOTE : IT IS IMPORTANT TO FOLLOW THE STEPS
+		// 1. Method
+		// 2. Arguments
+		// 3. Receiver
+		// BECAUSE THE MOOSE IMPORTER NEED THIS EXACT ORDER TO IMPORT ALREADY FOUND REFERENCES
 		try {
 			// Starting Element
 			writer.write(this.objectStart());
