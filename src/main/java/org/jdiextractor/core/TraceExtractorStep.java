@@ -3,6 +3,7 @@ package org.jdiextractor.core;
 import org.jdiextractor.config.TraceExtractorStepConfig;
 
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.StepEvent;
@@ -11,9 +12,6 @@ import com.sun.jdi.request.StepRequest;
 /**
  * Extracts the trace of an execution, meaning all method calls and their values
  * at each instant
- * 
- * Note : To enable full trace mode of an execution, define endpoint repBefore
- * at a negative number
  */
 public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConfig> {
 
@@ -37,7 +35,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 
 			vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN, StepRequest.STEP_INTO)
 					.enable();
-			if (config.getEndpoint().getRepBefore() < 0) {
+			if (config.activateEndpoint()) {
 				this.processEventsUntilEnd();
 			} else {
 				this.processEventsUntil(config.getEndpoint());
@@ -56,7 +54,7 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			ThreadReference targetThread = event.thread();
 			int frameCountNow = targetThread.frameCount();
 
-			if (frameCountBefore != frameCountNow) {
+			if (frameCountNow < config.getMaxMethodDepth() & frameCountBefore != frameCountNow) {
 				if (frameCountBefore + 1 == frameCountNow) {
 					this.createMethodWith(targetThread.frame(0));
 				}
@@ -71,6 +69,15 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 	@Override
 	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
 		throw new IllegalStateException("Exception occured during a step event : ");
+	}
+
+	@Override
+	protected void createMethodWith(StackFrame frame) {
+		if (config.collectValues()) {
+			super.createMethodWith(frame);
+		} else {
+			this.tracePopulator.newMethodFrom(frame.location().method());
+		}
 	}
 
 }

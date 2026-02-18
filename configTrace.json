@@ -4,7 +4,7 @@
 		"port": "5006"
 	},
 	"entrypoint": {
-		"className": "com.example.Victim",
+		"className": "com.example.ObjectRefSimulation",
 		"methodName": "main",
 		"methodArguments": [
 			"java.lang.String[]"
@@ -19,7 +19,10 @@
 		],
 		"repBefore": 0
 	},
-	"maxDepth" : 14,
+	"activateEndpoint" : true,
+	"collectValues" : false,
+	"maxObjectDepth" : 14,
+	"maxMethodDepth" : 14,
 	"logging": {
 		"outputName" : "JDIOutput",
 		"extension": "cs"

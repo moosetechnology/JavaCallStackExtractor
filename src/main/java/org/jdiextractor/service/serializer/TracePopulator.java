@@ -46,17 +46,17 @@ public class TracePopulator {
 	/**
 	 * The maximum depth of the object graph
 	 */
-	private int maxDepth;
+	private int maxObjectDepth;
 
 	/**
 	 * All already visited object references
 	 */
 	private Set<Long> visitedIds = new HashSet<>();
 
-	public TracePopulator(boolean valuesIndependents, int maxDepth) {
+	public TracePopulator(boolean valuesIndependents, int maxObjectDepth) {
 		this.trace = new Trace();
 		this.valuesIndependents = valuesIndependents;
-		this.maxDepth = maxDepth;
+		this.maxObjectDepth = maxObjectDepth;
 	}
 
 
@@ -167,7 +167,7 @@ public class TracePopulator {
 
 	private TraceValue newValueFrom(Value value, int depth) {
 		TraceValue traceValue;
-		if (maxDepth >= 0 & depth > maxDepth) {
+		if (maxObjectDepth >= 0 & depth > maxObjectDepth) {
 			traceValue = new TraceValueMaxDepth();
 		} else if (value == null) {
 			traceValue = null;
@@ -252,7 +252,7 @@ public class TracePopulator {
 
 		List<Value> arrayValues = arrayReference.getValues();
 
-		if (!arrayValues.isEmpty() & maxDepth >= 0 & depth + 1 > maxDepth) {
+		if (!arrayValues.isEmpty() & maxObjectDepth >= 0 & depth + 1 > maxObjectDepth) {
 			traceArrayReference.setAtMaxDepth(true);
 			return traceArrayReference;
 		} else {

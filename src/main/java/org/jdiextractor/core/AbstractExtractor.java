@@ -102,7 +102,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	}
 
 	protected void createTracePopulator() {
-		this.tracePopulator = new TracePopulator(valuesIndependents, config.getMaxDepth());
+		this.tracePopulator = new TracePopulator(valuesIndependents, config.getObjectMaxDepth());
 	}
 
 	/**
