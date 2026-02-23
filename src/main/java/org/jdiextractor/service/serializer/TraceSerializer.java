@@ -5,6 +5,7 @@ import org.jdiextractor.tracemodel.entities.TraceArgument;
 import org.jdiextractor.tracemodel.entities.TraceAssignation;
 import org.jdiextractor.tracemodel.entities.TraceAssignationLeft;
 import org.jdiextractor.tracemodel.entities.TraceAssignationRight;
+import org.jdiextractor.tracemodel.entities.TraceElement;
 import org.jdiextractor.tracemodel.entities.TraceInvocation;
 import org.jdiextractor.tracemodel.entities.TraceMethod;
 import org.jdiextractor.tracemodel.entities.TraceParameter;
@@ -21,11 +22,17 @@ import org.jdiextractor.tracemodel.entities.traceValues.TraceValueMaxDepth;
 
 public abstract class TraceSerializer {
 
+	public abstract void startSerialize();
+
+	public abstract void serialize(TraceElement element);
+
+	public abstract void endSerialize();
+
+	public abstract void serialize(Trace trace);
+
 	public abstract void serialize(TraceArgument traceArgument);
 
 	public abstract void serialize(TraceAssignation traceAssignation);
-
-	public abstract void serialize(Trace trace);
 
 	public abstract void serialize(TraceAssignationLeft traceAssignationLeft);
 

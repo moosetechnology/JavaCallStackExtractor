@@ -3,11 +3,11 @@ package org.jdiextractor.service.serializer;
 import org.jdiextractor.tracemodel.entities.Trace;
 import org.jdiextractor.tracemodel.entities.TraceElement;
 
-public class TracePopulator extends JDIToTraceConverter {
+public class DefferedTraceConverter extends JDIToTraceConverter {
 
 	private Trace trace;
 
-	public TracePopulator(boolean valuesIndependents, int maxObjectDepth, TraceLogger logger) {
+	public DefferedTraceConverter(boolean valuesIndependents, int maxObjectDepth, TraceLogger logger) {
 		super(valuesIndependents, maxObjectDepth, logger);
 		this.trace = new Trace();
 	}

@@ -30,35 +30,62 @@ public class TraceSerializerJson extends TraceSerializer {
 
 	private BufferedWriter writer;
 	private boolean valueIndependents;
+	private int nbElementLogged;
 
 	public TraceSerializerJson(BufferedWriter writer, boolean valueIndependents) {
 		this.writer = writer;
 		this.valueIndependents = valueIndependents;
+		this.nbElementLogged = 0;
 	}
 
 	@Override
-	public void serialize(Trace trace) {
+	public void startSerialize() {
 		try {
 			writer.write(this.objectStart());
+
 			writer.write(quotes("valueIndependents") + ":" + valueIndependents);
 			writer.write(this.joinElementListing());
 
 			writer.write(quotes("Lines") + ":");
 			writer.write(this.arrayStart());
-			Iterator<TraceElement> ite = trace.getElements().iterator();
-			if (ite.hasNext()) {
-				ite.next().acceptSerializer(this);
-			}
-			while (ite.hasNext()) {
-				writer.write(this.joinElementListing());
-				ite.next().acceptSerializer(this);
-			}
-
-			writer.write(this.arrayEnd());
-			writer.write(this.objectEnd());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void serialize(TraceElement element) {
+		if (nbElementLogged != 0) {
+			try {
+				writer.write(this.joinElementListing());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		element.acceptSerializer(this);
+		this.nbElementLogged++;
+	}
+
+	@Override
+	public void endSerialize() {
+		try {
+			writer.write(this.arrayEnd());
+			writer.write(this.objectEnd());
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void serialize(Trace trace) {
+		this.startSerialize();
+		Iterator<TraceElement> ite = trace.getElements().iterator();
+		while (ite.hasNext()) {
+			ite.next().acceptSerializer(this);
+		}
+		this.endSerialize();
 	}
 
 	@Override
@@ -101,7 +128,8 @@ public class TraceSerializerJson extends TraceSerializer {
 		// 1. Method
 		// 2. Arguments
 		// 3. Receiver
-		// BECAUSE THE MOOSE IMPORTER NEED THIS EXACT ORDER TO IMPORT ALREADY FOUND REFERENCES
+		// BECAUSE THE MOOSE IMPORTER NEED THIS EXACT ORDER TO IMPORT ALREADY FOUND
+		// REFERENCES
 		try {
 			// Starting Element
 			writer.write(this.objectStart());

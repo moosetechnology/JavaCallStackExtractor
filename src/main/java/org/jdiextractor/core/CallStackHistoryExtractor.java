@@ -1,8 +1,8 @@
 package org.jdiextractor.core;
 
 import org.jdiextractor.config.CallStackHistoryExtractorConfig;
+import org.jdiextractor.service.serializer.DefferedTraceConverter;
 import org.jdiextractor.service.serializer.TraceLogger;
-import org.jdiextractor.service.serializer.TracePopulator;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
@@ -38,7 +38,7 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 	@Override
 	protected void createTracePopulator() {
 		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
-		this.jdiToTraceConverter = new TracePopulator(valuesIndependents, config.getObjectMaxDepth(), logger);
+		this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
 	}
 
 	/**
