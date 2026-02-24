@@ -19,6 +19,9 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 
 	private int frameCountBefore;
 
+	private StepRequest stepInto;
+	private StepRequest stepOver;
+
 	public TraceExtractorStep() {
 		super(true);
 	}
@@ -35,9 +38,13 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			this.createMethodWith(this.getThread().frame(0));
 			frameCountBefore = 1;
 
-			vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN, StepRequest.STEP_INTO)
-					.enable();
-			if (config.activateEndpoint()) {
+			stepOver = vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN,
+					StepRequest.STEP_OVER);
+			stepInto = vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN,
+					StepRequest.STEP_INTO);
+			stepInto.enable();
+
+			if (!config.activateEndpoint()) {
 				this.processEventsUntilEnd();
 			} else {
 				this.processEventsUntil(config.getEndpoint());
@@ -56,12 +63,16 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			ThreadReference targetThread = event.thread();
 			int frameCountNow = targetThread.frameCount();
 
-			if (frameCountNow < config.getMaxMethodDepth() & frameCountBefore != frameCountNow) {
-				if (frameCountBefore + 1 == frameCountNow) {
-					this.createMethodWith(targetThread.frame(0));
-				}
-				frameCountBefore = frameCountNow;
+			if (frameCountNow >= config.getMaxMethodDepth()) {
+				this.ensureStepOver();
+			} else {
+				this.ensureStepInto();
 			}
+			if (frameCountNow > frameCountBefore) {
+				this.createMethodWith(targetThread.frame(0));
+			}
+
+			frameCountBefore = frameCountNow;
 
 		} catch (IncompatibleThreadStateException e) {
 			throw new IllegalStateException("Exception occured during a step event : " + e);
@@ -81,11 +92,25 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			this.jdiToTraceConverter.newMethodFrom(frame.location().method());
 		}
 	}
-	
+
 	@Override
 	protected void createTracePopulator() {
 		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
 		this.jdiToTraceConverter = new BufferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+	}
+
+	private void ensureStepOver() {
+		if (!stepOver.isEnabled()) {
+			stepInto.disable();
+			stepOver.enable();
+		}
+	}
+
+	private void ensureStepInto() {
+		if (!stepInto.isEnabled()) {
+			stepOver.disable();
+			stepInto.enable();
+		}
 	}
 
 }
