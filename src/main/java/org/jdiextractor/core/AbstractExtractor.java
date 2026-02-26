@@ -21,10 +21,12 @@ import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.event.MethodEntryEvent;
+import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.request.ClassPrepareRequest;
+import com.sun.jdi.request.MethodExitRequest;
 
 /**
  * Base framework for implementing JDI-based analysis tools.
@@ -151,6 +153,13 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 				cpReq.addClassFilter(bkConfig.getClassName());
 				cpReq.enable();
 			}
+		} else {
+			// Adding a request to stop when the entrypoint end
+			// We make the assumption that we only go though the entry point one time
+			// TODO Maybe should also add an entryRequest to check if the method is called again so that we don't stop too early
+			MethodExitRequest exitReq = vm.eventRequestManager().createMethodExitRequest();
+			exitReq.addClassFilter(config.getEntrypoint().getClassName());
+			exitReq.enable();
 		}
 
 		vm.resume();
@@ -163,8 +172,10 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 					if (event instanceof StepEvent) {
 						this.reactToStepEvent((StepEvent) event);
 					}
-					if (event instanceof MethodEntryEvent) {
+					else if (event instanceof MethodEntryEvent) {
 						this.reactToMethodEntryEvent((MethodEntryEvent) event);
+					} else if (event instanceof MethodExitEvent) {
+						this.reactToMethodExitEvent((MethodExitEvent) event);
 					}
 
 					else if (event instanceof VMDeathEvent || event instanceof VMDisconnectEvent) {
@@ -193,7 +204,6 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 							throw new IllegalStateException("ClassPrepareRequest caught but class is still not loaded");
 						}
 					}
-
 				}
 
 				eventSet.resume();
@@ -202,6 +212,7 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 			throw new IllegalStateException("Interruption during extraction: " + e.getMessage());
 		}
 	}
+
 
 	/**
 	 * Process all events of the main thread until the VM dies or disconnect
@@ -232,7 +243,9 @@ public abstract class AbstractExtractor<T extends AbstractExtractorConfig> {
 	}
 
 	protected abstract void reactToMethodEntryEvent(MethodEntryEvent event);
-
+	
+	protected abstract void reactToMethodExitEvent(MethodExitEvent event);
+                
 	protected abstract void reactToStepEvent(StepEvent event);
 
 }

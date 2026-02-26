@@ -9,6 +9,7 @@ import org.jdiextractor.service.serializer.TraceLogger;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.event.MethodEntryEvent;
+import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.event.StepEvent;
 
 /**
@@ -66,6 +67,11 @@ public class CallStackSnapshotExtractor extends AbstractExtractor<CallStackSnaps
 	protected void createTracePopulator() {
 		TraceLogger logger = new TraceLogger(config.getLogging(), this.valuesIndependents);
 		this.jdiToTraceConverter = new DefferedTraceConverter(valuesIndependents, config.getObjectMaxDepth(), logger);
+	}
+
+	@Override
+	protected void reactToMethodExitEvent(MethodExitEvent event) {
+		// Nothing, should not happen in this scenario
 	}
 
 

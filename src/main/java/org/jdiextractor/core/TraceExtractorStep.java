@@ -1,13 +1,18 @@
 package org.jdiextractor.core;
 
+import java.util.List;
+
 import org.jdiextractor.config.TraceExtractorStepConfig;
+import org.jdiextractor.config.components.BreakpointConfig;
 import org.jdiextractor.service.serializer.TraceLogger;
 import org.jdiextractor.service.serializer.BufferedTraceConverter;
 
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
+import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.StepRequest;
 
@@ -35,15 +40,19 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			this.processEventsUntil(config.getEntrypoint());
 
 			// Fix for the first method being the main
-			this.createMethodWith(this.getThread().frame(0));
+			StackFrame initialFrame = this.getThread().frame(0);
+			this.createMethodWith(initialFrame);
+
 			frameCountBefore = 1;
 
+			// Step configuration
 			stepOver = vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN,
 					StepRequest.STEP_OVER);
 			stepInto = vm.eventRequestManager().createStepRequest(this.getThread(), StepRequest.STEP_MIN,
 					StepRequest.STEP_INTO);
-			stepInto.enable();
+			this.ensureStepInto();
 
+			// Different end point defined by the configuration
 			if (!config.activateEndpoint()) {
 				this.processEventsUntilEnd();
 			} else {
@@ -61,17 +70,22 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 	protected void reactToStepEvent(StepEvent event) {
 		try {
 			ThreadReference targetThread = event.thread();
+			StackFrame frame = targetThread.frame(0);
 			int frameCountNow = targetThread.frameCount();
 
+			// PHASE 1 : Detections
+			// 1. Detect invocations
+			if (frameCountNow > frameCountBefore) {
+				this.createMethodWith(frame);
+			}
+
+			// PHASE 2 : Update step policy
 			if (frameCountNow >= config.getMaxMethodDepth()) {
 				this.ensureStepOver();
 			} else {
 				this.ensureStepInto();
 			}
-			if (frameCountNow > frameCountBefore) {
-				this.createMethodWith(targetThread.frame(0));
-			}
-
+			// Update frameCount
 			frameCountBefore = frameCountNow;
 
 		} catch (IncompatibleThreadStateException e) {
@@ -81,7 +95,42 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 
 	@Override
 	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
-		throw new IllegalStateException("Exception occured during a step event : ");
+		// Nothing, should not happen in this scenario
+	}
+
+	@Override
+	protected void reactToMethodExitEvent(MethodExitEvent event) {
+		// The only thing we catch is the end of the entrypoint
+		// We stop here, everything after is sound from the VM
+		Method method = event.method();
+
+		if (isExactMethodMatch(method, config.getEntrypoint())) {
+			this.desactivateSteps();
+		}
+	}
+
+	private boolean isExactMethodMatch(Method method, BreakpointConfig config) {
+		if (!method.name().equals(config.getMethodName())) {
+			return false;
+		}
+
+		List<String> expectedArgs = config.getMethodArguments();
+		List<String> actualArgs = method.argumentTypeNames();
+
+		if (expectedArgs == null)
+			expectedArgs = java.util.Collections.emptyList();
+
+		if (expectedArgs.size() != actualArgs.size()) {
+			return false;
+		}
+
+		for (int i = 0; i < expectedArgs.size(); i++) {
+			if (!expectedArgs.get(i).equals(actualArgs.get(i))) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Override
@@ -111,6 +160,11 @@ public class TraceExtractorStep extends AbstractExtractor<TraceExtractorStepConf
 			stepOver.disable();
 			stepInto.enable();
 		}
+	}
+
+	private void desactivateSteps() {
+		stepInto.disable();
+		stepOver.disable();
 	}
 
 }

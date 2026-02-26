@@ -6,6 +6,7 @@ import org.jdiextractor.service.serializer.TraceLogger;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.MethodEntryEvent;
+import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.StepRequest;
 
@@ -77,6 +78,11 @@ public class CallStackHistoryExtractor extends AbstractExtractor<CallStackHistor
 
 	@Override
 	protected void reactToMethodEntryEvent(MethodEntryEvent event) {
+		// Nothing, should not happen in this scenario
+	}
+
+	@Override
+	protected void reactToMethodExitEvent(MethodExitEvent event) {
 		// Nothing, should not happen in this scenario
 	}
 
