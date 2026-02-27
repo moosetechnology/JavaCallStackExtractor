@@ -59,7 +59,6 @@ public class TracePopulator {
 		this.maxObjectDepth = maxObjectDepth;
 	}
 
-
 	public Trace getTrace() {
 		return this.trace;
 	}
@@ -307,17 +306,29 @@ public class TracePopulator {
 				paramString = String.format("%s,%s", paramString, parseTypeName(ite.next()));
 			}
 		} catch (AbsentInformationException e) {
-			// nothing to do
+			// In case informations are absents, still try to add informations
+			Iterator<String> ite = method.argumentTypeNames().iterator();
+			if (ite.hasNext()) {
+				paramString = parseTypeName(ite.next());
+			}
+			while (ite.hasNext()) {
+				paramString = String.format("%s,%s", paramString, parseTypeName(ite.next()));
+			}
 		}
 		return String.format("%s(%s)", method.name(), paramString);
 	}
 
-	public String parseTypeName(LocalVariable var) {
+	private String parseTypeName(LocalVariable var) {
 		JVMSignatureToMooseSignatureConverter parser = JVMSignatureToMooseSignatureConverter.make();
 		if (var.genericSignature() == null)
 			return parser.parseTypeSig(var.signature());
 		else
 			return parser.parseTypeSig(var.genericSignature());
+	}
+
+	private String parseTypeName(String s) {
+		int lastDotIndex = s.lastIndexOf('.');
+		return lastDotIndex == -1 ? s : s.substring(lastDotIndex + 1);
 	}
 
 }
