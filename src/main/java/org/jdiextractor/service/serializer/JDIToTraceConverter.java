@@ -45,7 +45,7 @@ public abstract class JDIToTraceConverter {
 	 * The maximum depth of the object graph
 	 */
 	private int maxObjectDepth;
-	
+
 	/**
 	 * The logger used when the trace population is finished
 	 */
@@ -65,7 +65,7 @@ public abstract class JDIToTraceConverter {
 	protected abstract void addElement(TraceElement element);
 
 	public abstract void serialize();
-	
+
 	public abstract void removeLastElement();
 
 	public TraceMethod newMethodFrom(Method method, List<Value> argumentValues, ObjectReference receiverObject) {
@@ -317,7 +317,14 @@ public abstract class JDIToTraceConverter {
 				paramString = String.format("%s,%s", paramString, parseTypeName(ite.next()));
 			}
 		} catch (AbsentInformationException e) {
-			// nothing to do
+			// In case informations are absents, still try to add informations
+			Iterator<String> ite = method.argumentTypeNames().iterator();
+			if (ite.hasNext()) {
+				paramString = parseTypeName(ite.next());
+			}
+			while (ite.hasNext()) {
+				paramString = String.format("%s,%s", paramString, parseTypeName(ite.next()));
+			}
 		}
 		return String.format("%s(%s)", method.name(), paramString);
 	}
@@ -330,4 +337,9 @@ public abstract class JDIToTraceConverter {
 			return parser.parseTypeSig(var.genericSignature());
 	}
 
+	private String parseTypeName(String s) {
+		int lastDotIndex = s.lastIndexOf('.');
+		return lastDotIndex == -1 ? s : s.substring(lastDotIndex + 1);
+	}
+s
 }
